@@ -1,5 +1,6 @@
 asgiref==3.11.1
 Django==5.2.12
+django-cors-headers==4.9.0
 djangorestframework==3.16.1
 packaging @ file:///opt/miniconda3/conda-bld/packaging_1761049079023/work
 setuptools==80.10.2
