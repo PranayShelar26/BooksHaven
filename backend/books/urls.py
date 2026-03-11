@@ -7,9 +7,3 @@ urlpatterns = [
     path("loans/my/", my_loans, name="my_loans"),
     path("loans/<int:loan_id>/return/", return_loan, name="return_loan"),
 ]
-from .views import get_books,add_book
-
-urlpatterns = [
-    path('books/',get_books),
-    path('add-book/',add_book)
-]   
