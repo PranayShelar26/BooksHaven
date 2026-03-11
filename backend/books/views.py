@@ -1,3 +1,4 @@
+
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -10,6 +11,13 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Book, Loan
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Book
+from .serializers import BookSerializer
+
+# Create your views here.
+@api_view(['GET'])
 
 def get_books(request):
     if request.method != "GET":
@@ -143,3 +151,13 @@ def return_loan(request, loan_id: int):
             "available_copies": book.available_copies,
         }
     )
+
+@api_view(['POST'])
+def add_book(request):
+    serializer = BookSerializer(data= request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    
+    return Response(serializer.errors)

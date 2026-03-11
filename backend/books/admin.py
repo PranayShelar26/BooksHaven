@@ -12,3 +12,8 @@ class BookAdmin(admin.ModelAdmin):
 class LoanAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "book", "borrow_date", "due_date", "return_date")
     search_fields = ("user__username", "book__title", "book__isbn")
+
+from .models import Book
+# Register your models here.
+
+admin.site.register(Book)
