@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 
 const BookCatagoryList = () => {
     const [activate, setActivate] = useState(false);
-    
   return (
     <>
       <div className="flex flex-row gap-2">
