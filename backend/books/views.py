@@ -41,6 +41,7 @@ def get_books(request):
     return JsonResponse(data, safe=False)
 
 
+
 @csrf_exempt
 @login_required
 @transaction.atomic
@@ -78,6 +79,7 @@ def borrow_book(request, book_id: int):
             "due_date": loan.due_date.isoformat(),
         }
     )
+
 
 
 @login_required

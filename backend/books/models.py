@@ -8,7 +8,6 @@ class Book(models.Model):
     author = models.CharField(max_length=255, blank=True)
     isbn = models.CharField(max_length=13, blank=True)
     description = models.TextField(blank=True)
-
     total_copies = models.PositiveIntegerField(default=1)
     available_copies = models.PositiveIntegerField(default=1)
 
