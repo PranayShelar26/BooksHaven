@@ -1,15 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
+import Logo from "../assets/BooksHavenLogo.png"
 const Signup = () => {
   return (
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <img
+          <div className="w-20  mx-auto flex shadow-xl rounded-3xl overflow-hidden justify-center">
+            <img
             alt="Your Company"
-            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto shadow-xl"
+            src={Logo}
+            className="mx-auto h-full w-full  "
           />
+          </div>
           <h1 className="mt-6 text-center text-2xl/9 font-bold ">
             Books Haven
           </h1> 
@@ -100,27 +102,13 @@ const Signup = () => {
               </div>
               
             </div>
-            <div className="flex mt-2 flex-row justify-between align-middle ">
-                <div className="flex flex-row gap-1 align-middle">
-                    <input type="checkbox" />
-                    Remember me
-                </div>
-                <div className="text-sm">
-                  <a
-                    href="#"
-                    className="font-semibold text-black hover:underline "
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
 
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold shadow-xs hover:bg-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2 "
+                className="flex w-full mt-5 justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold shadow-xs hover:bg-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2 "
               >
-                Login
+                Sign up
               </button>
             </div>
           </form>

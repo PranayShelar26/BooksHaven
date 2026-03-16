@@ -2,12 +2,14 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import book_img from "../assets/book_banner.png";
 import BookCard from "../components/BookCard";
+import { Outlet } from "react-router-dom";
+
 const Dashboard = () => {
-  
+
+
   return (
     <>
-      <Navbar />
-      <div className="mt-8 sm:px-2 mx-20 space-y-10">
+      <div className="mt-8 sm:px-2 mx-20 space-y-10 my-5">
         <div className="max-w-8xl mx-auto mb-6">
           <div className="relative">
             <input
@@ -17,6 +19,7 @@ const Dashboard = () => {
             />
           </div>
         </div>
+        <Outlet/>
         {/* Featured Book Section */}
         <div>
           <div className="font-bold text-2xl mb-8">Featured Book</div>

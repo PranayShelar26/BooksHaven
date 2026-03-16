@@ -3,11 +3,12 @@ import Navbar from "../components/Navbar";
 import book_img from "../assets/book_banner.png";
 import BookCard from "../components/BookCard";
 import BookCatagoryList from "../components/BookCatagoryList";
+import { Outlet } from "react-router-dom";
 const BookCatalogue = () => {
   return (
     <>
-      <Navbar />
-      <div className="mt-8 sm:px-2 mx-20 space-y-10">
+      <div className="mt-8 sm:px-2 mx-20 my-5 space-y-10">
+        <Outlet/>
         <div>
           <div className="space-y-2">
             <h1 className="font-bold text-3xl">Book Catalogue</h1>
