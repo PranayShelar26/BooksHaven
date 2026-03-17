@@ -14,10 +14,10 @@ def serialize_loan(loan):
             "isbn": loan.book.isbn,
             "category": loan.book.category,
             "status": loan.book.status,
-            "cover": loan.book.cover.url if loan.book.cover else None,  # NEW
-            "publisher": loan.book.publisher,                            # NEW
-            "pages": loan.book.pages,                                    # NEW
-            "language": loan.book.language,                              # NEW
+            "cover": loan.book.cover.url if loan.book.cover else None,  
+            "publisher": loan.book.publisher,
+            "pages": loan.book.pages,
+            "language": loan.book.language,
         },
     }
 

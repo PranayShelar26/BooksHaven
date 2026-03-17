@@ -13,11 +13,23 @@ from .models import Book, Loan
 from django.db.models import Count
 from django.db.models import Q
 
-# Create
-
-
+# ============================================
+# BooksHaven Backend Views
+# --------------------------------------------
+# This module provides JSON-based APIs for:
+# - Authentication (session-based login/logout)
+# - Public book browsing (list, detail, search, sort)
+# - Loan operations (borrow, return, current loans, history)
+# - Admin management (books CRUD, users CRUD, user status)
+#
+# Notes:
+# - Auth uses Django session cookies (login()) rather than tokens.
+# - Most endpoints return JsonResponse with {"ok": ...} and/or data lists.
+# - Admin endpoints require is_staff=True.
+# ============================================
 
 def _json_body(request):
+    """Parse JSON body; return dict or None if invalid."""
     try:
         raw = request.body.decode("utf-8") if request.body else "{}"
         return json.loads(raw or "{}")
@@ -26,6 +38,7 @@ def _json_body(request):
 
 
 def api_login_required(view_func):
+    """Require session-authenticated user; otherwise return 401."""
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({"ok": False, "message": "Authentication required."}, status=401)
@@ -34,6 +47,7 @@ def api_login_required(view_func):
 
 
 def admin_required(view_func):
+    """Require admin (is_staff); otherwise return 401/403."""
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({"ok": False, "message": "Authentication required."}, status=401)
@@ -49,6 +63,7 @@ def admin_required(view_func):
 
 @csrf_exempt
 def auth_register(request):
+    """POST /api/auth/register/ - Create a new user."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
@@ -76,6 +91,7 @@ def auth_register(request):
     
 @csrf_exempt
 def auth_login(request):
+    """POST /api/auth/login/ - Login and set session cookie."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
@@ -100,6 +116,7 @@ def auth_login(request):
 
 @csrf_exempt
 def auth_logout(request):
+    """POST /api/auth/logout/ - Clear session."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
     logout(request)
@@ -107,6 +124,7 @@ def auth_logout(request):
 
 @csrf_exempt
 def auth_me(request):
+    """GET /api/auth/me/ - Check current session user."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
 
@@ -130,6 +148,7 @@ def auth_me(request):
 # ----------------------------
  
 def get_books(request):
+    """GET /api/books/ - List/search books."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
@@ -140,6 +159,7 @@ def get_books(request):
     qs = Book.objects.all()
  
     if q:
+        # Keyword search across title/author/isbn
         qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
  
     if category:
@@ -174,6 +194,7 @@ def get_books(request):
  
  
 def get_book_detail(request, book_id: int):
+    """GET /api/books/<book_id>/ - Book details."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
@@ -197,15 +218,10 @@ def get_book_detail(request, book_id: int):
     })
 
 def get_featured_books(request):
-    """
-    Get featured books (most borrowed books)
-    GET /api/books/featured/ - Returns top 8 most borrowed books
-    """
+    """GET /api/books/featured/ - Top borrowed books."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
-    # Get top 8 most borrowed books
-    # Filter by available_copies > 0 instead of status property
     featured_books = (
         Book.objects
         .annotate(borrow_count=Count('loans'))
@@ -218,18 +234,13 @@ def get_featured_books(request):
  
  
 def get_new_books(request):
-    """
-    Get new books (recently added)
-    GET /api/books/new/ - Returns latest 8 added books
-    """
+    """GET /api/books/new/ - Recently added books."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
-    # Get latest 8 books added to the system
-    # Filter by available_copies > 0 instead of status property
     new_books = (
         Book.objects
-        .filter(available_copies__gt=0)  # Filter by available_copies
+        .filter(available_copies__gt=0)
         .order_by('-created_at')[:8]
     )
  
@@ -240,14 +251,15 @@ def get_new_books(request):
 # Loans APIs (per-user)
 # ----------------------------
 
-
 @csrf_exempt
 @api_login_required
 @transaction.atomic
 def borrow_book(request, book_id: int):
+    """POST /api/books/<book_id>/borrow/ - Borrow a book (atomic inventory update)."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
+    # Lock row + atomic transaction to avoid race conditions on available_copies.
     book = get_object_or_404(Book.objects.select_for_update(), pk=book_id)
 
     if book.available_copies <= 0:
@@ -280,10 +292,7 @@ def borrow_book(request, book_id: int):
 
 @api_login_required
 def my_loans_current(request):
-    """
-    Get current loans (not yet returned)
-    GET /api/loans/my/ - Returns loans with return_date=None
-    """
+    """GET /api/loans/my/ - Current loans (not returned)."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
@@ -299,10 +308,7 @@ def my_loans_current(request):
  
 @api_login_required
 def my_loans_history(request):
-    """
-    Get loan history (already returned)
-    GET /api/loans/history/ - Returns loans with return_date set
-    """
+    """GET /api/loans/history/ - Loan history (returned)."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
  
@@ -320,6 +326,7 @@ def my_loans_history(request):
 @api_login_required
 @transaction.atomic
 def return_loan(request, loan_id: int):
+    """POST /api/loans/<loan_id>/return/ - Return a loan (atomic inventory update)."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
@@ -337,6 +344,7 @@ def return_loan(request, loan_id: int):
     loan.save(update_fields=["return_date"])
 
     book = loan.book
+    # Cap inventory at total_copies to avoid exceeding max copies.
     book.available_copies = min(book.total_copies, book.available_copies + 1)
     book.save(update_fields=["available_copies"])
 
@@ -349,16 +357,15 @@ def return_loan(request, loan_id: int):
     })
 
 # ----------------------------
-# Admin Book Views
+# Admin APIs (staff only)
 # ----------------------------
  
 @csrf_exempt
 @admin_required
 def admin_books(request):
     """
-    Admin books list and create
     GET /api/admin/books/ - List books with filtering
-    POST /api/admin/books/ - Create new book (accepts multipart/form-data for image upload)
+    POST /api/admin/books/ - Create new books
     """
     if request.method == "GET":
         q = (request.GET.get("q") or "").strip()
@@ -393,6 +400,7 @@ def admin_books(request):
         return JsonResponse(data, safe=False)
  
     if request.method == "POST":
+        # Admin create uses multipart/form-data to support optional cover image upload
         title = (request.POST.get("title") or "").strip()
         if not title:
             return JsonResponse({"ok": False, "message": "title is required."}, status=400)
@@ -485,7 +493,6 @@ def admin_books(request):
 @admin_required
 def admin_book_detail(request, book_id: int):
     """
-    Admin book detail, update, and delete
     PUT /api/admin/books/<int:book_id>/ - Update book
     DELETE /api/admin/books/<int:book_id>/ - Delete book
     """
@@ -565,6 +572,7 @@ def admin_book_detail(request, book_id: int):
 
 @admin_required
 def admin_users(request):
+    """GET /api/admin/users/ - Admin list users (with loan counts)."""
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
 
@@ -599,6 +607,7 @@ def admin_users(request):
 @csrf_exempt
 @admin_required
 def admin_create_user(request):
+    """POST /api/admin/users/create/ - Admin create user."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
@@ -627,7 +636,6 @@ def admin_create_user(request):
 @admin_required
 def admin_user_detail(request, user_id: int):
     """
-    Admin user detail, update, and delete
     PUT /api/admin/users/<int:user_id>/ - Update user
     DELETE /api/admin/users/<int:user_id>/ - Delete user
     PATCH /api/admin/users/<int:user_id>/ - Update user status

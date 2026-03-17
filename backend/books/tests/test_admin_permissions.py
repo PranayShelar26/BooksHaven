@@ -11,13 +11,14 @@ class AdminPermissionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
+        # Normal user (should be forbidden for admin endpoints)
         self.student = User.objects.create_user(
             username="student2",
             email="student2@example.com",
             password="pass12345",
         )
 
-        # 你们 admin_required 用的是 is_staff，所以这里用 create_user + is_staff=True
+        # Admin user: admin_required checks user.is_staff
         self.admin = User.objects.create_user(
             username="admin1",
             email="admin1@example.com",
@@ -26,6 +27,7 @@ class AdminPermissionTests(TestCase):
         self.admin.is_staff = True
         self.admin.save()
 
+        # Sample book used for admin book update tests
         self.book = Book.objects.create(
             title="Admin Test Book",
             author="Admin Tester",
@@ -35,7 +37,7 @@ class AdminPermissionTests(TestCase):
         )
 
     def login_as(self, username, password="pass12345"):
-        """session 登录：成功后自动携带 cookie。"""
+        """Session-based login: once successful, the client keeps the session cookie automatically."""
         resp = self.client.post(
             f"{API_PREFIX}auth/login/",
             {"username": username, "password": password},
@@ -44,18 +46,18 @@ class AdminPermissionTests(TestCase):
         self.assertEqual(resp.status_code, 200, resp.content.decode("utf-8"))
 
     def test_admin_books_requires_admin(self):
-        # student 访问应 403
+        # Student should be denied (403)
         self.login_as("student2")
         resp = self.client.get(f"{API_PREFIX}admin/books/")
         self.assertEqual(resp.status_code, 403, resp.content.decode("utf-8"))
 
-        # admin 访问应 200
+        # Admin should be allowed (200)
         self.login_as("admin1")
         resp2 = self.client.get(f"{API_PREFIX}admin/books/")
         self.assertEqual(resp2.status_code, 200, resp2.content.decode("utf-8"))
 
     def test_admin_book_detail_requires_admin(self):
-        # student PUT 应 403
+        # Student PUT should be denied (403)
         self.login_as("student2")
         resp = self.client.put(
             f"{API_PREFIX}admin/books/{self.book.id}/",
@@ -64,7 +66,7 @@ class AdminPermissionTests(TestCase):
         )
         self.assertEqual(resp.status_code, 403, resp.content.decode("utf-8"))
 
-        # admin PUT 应 200
+        # Admin PUT should be allowed (200)
         self.login_as("admin1")
         resp2 = self.client.put(
             f"{API_PREFIX}admin/books/{self.book.id}/",
@@ -74,17 +76,18 @@ class AdminPermissionTests(TestCase):
         self.assertEqual(resp2.status_code, 200, resp2.content.decode("utf-8"))
 
     def test_admin_users_list_requires_admin(self):
-        # student GET 应 403
+        # Student GET should be denied (403)
         self.login_as("student2")
         resp = self.client.get(f"{API_PREFIX}admin/users/")
         self.assertEqual(resp.status_code, 403, resp.content.decode("utf-8"))
 
-        # admin GET 应 200
+        # Admin GET should be allowed (200)
         self.login_as("admin1")
         resp2 = self.client.get(f"{API_PREFIX}admin/users/")
         self.assertEqual(resp2.status_code, 200, resp2.content.decode("utf-8"))
 
     def test_admin_can_create_user(self):
+        # Admin can create a new user
         self.login_as("admin1")
 
         resp = self.client.post(

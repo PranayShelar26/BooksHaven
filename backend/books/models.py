@@ -3,9 +3,10 @@ from django.db import models
 from django.utils import timezone
 
 
-
-
 class Book(models.Model):
+    """Book entity stored in the library catalogue (with optional cover image and inventory counts)."""
+
+    # Dropdown options used by the frontend/admin forms
     LANGUAGE_CHOICES = [
         ('English', 'English'),
         ('Spanish', 'Spanish'),
@@ -16,7 +17,7 @@ class Book(models.Model):
         ('Hindi', 'Hindi'),
         ('Other', 'Other'),
     ]
- 
+
     CATEGORY_CHOICES = [
         ('Fiction', 'Fiction'),
         ('Non-Fiction', 'Non-Fiction'),
@@ -45,13 +46,13 @@ class Book(models.Model):
         ('Religion', 'Religion'),
         ('Other', 'Other'),
     ]
- 
-    # Basic Information
+
+    # Basic identification fields
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255, blank=True)
-    isbn = models.CharField(max_length=13, blank=True, unique=True)
-    
-    # Details
+    isbn = models.CharField(max_length=13, blank=True, unique=True)  # unique to avoid duplicate catalogue entries
+
+    # Optional metadata (used for filtering/search and displaying details)
     category = models.CharField(
         max_length=100,
         choices=CATEGORY_CHOICES,
@@ -68,48 +69,53 @@ class Book(models.Model):
         default='English',
         blank=True
     )
-    
-    # Book Cover
+
+    # Cover image (requires Pillow; stored under MEDIA_ROOT/book_covers/)
     cover = models.ImageField(
         upload_to='book_covers/',
         null=True,
         blank=True,
         help_text='Upload a book cover image (JPG, PNG, etc.)'
     )
-    
-    # Library Management
+
+    # Inventory tracking
     total_copies = models.PositiveIntegerField(default=1)
     available_copies = models.PositiveIntegerField(default=1)
-    
-    # Metadata
+
+    # Created timestamp for sorting and "new books" feature
     created_at = models.DateTimeField(auto_now_add=True)
- 
+
     @property
     def status(self) -> str:
+        """Derived status shown in UI (not stored in DB)."""
         return "Available" if self.available_copies > 0 else "Borrowed"
- 
+
     def __str__(self):
         return f"{self.title} - {self.author}".strip()
- 
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Book'
         verbose_name_plural = 'Books'
 
+
 class Loan(models.Model):
+    """Loan record linking a user to a borrowed book (borrow date, due date, optional return date)."""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="loans")
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="loans")
 
+    # Dates: return_date is null until the book is returned
     borrow_date = models.DateField(default=timezone.now)
     due_date = models.DateField()
     return_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"Loan #{self.id}: {self.user} -> {self.book}"
-    
+
     class Meta:
-        ordering = ["-borrow_date"]  # Default ordering by newest first
+        ordering = ["-borrow_date"]  # newest loans first
         indexes = [
-            models.Index(fields=["user", "return_date"]),    # Speed up filtering
-            models.Index(fields=["user", "-borrow_date"]),   # Speed up ordering
+            models.Index(fields=["user", "return_date"]),   # fast "current vs returned" filtering per user
+            models.Index(fields=["user", "-borrow_date"]),  # fast ordering per user
         ]
