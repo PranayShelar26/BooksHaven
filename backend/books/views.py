@@ -12,15 +12,15 @@ from .serializer import serialize_loan, serialize_book
 from .models import Book, Loan
 from django.db.models import Count
 
-# Create your views here.
+# Create
 
 
 
 def _json_body(request):
     try:
-        raw = request.body.decode("utf-8") or "{}"
-        return json.loads(raw)
-    except json.JSONDecodeError:
+        raw = request.body.decode("utf-8") if request.body else "{}"
+        return json.loads(raw or "{}")
+    except (UnicodeDecodeError, json.JSONDecodeError):
         return None
 
 
@@ -72,11 +72,6 @@ def auth_register(request):
         "user": {"id": user.id, "username": user.username, "email": user.email},
     })
 
-def _json_body(request):
-    try:
-        return json.loads(request.body)
-    except (ValueError, TypeError):
-        return None
     
 @csrf_exempt
 def auth_login(request):
@@ -139,7 +134,7 @@ def get_books(request):
  
     q = (request.GET.get("q") or "").strip()
     category = (request.GET.get("category") or "").strip()
-    sort = (request.GET.get("sort") or "").strip()  # optional: title/created_at
+    sort = (request.GET.get("sort") or "").strip() 
  
     qs = Book.objects.all()
  
@@ -152,7 +147,7 @@ def get_books(request):
     if sort == "title":
         qs = qs.order_by("title")
     else:
-        qs = qs.order_by("-created_at", "-id")  # default: newest first
+        qs = qs.order_by("-created_at", "-id")
  
     data = []
     for b in qs:
@@ -209,11 +204,11 @@ def get_featured_books(request):
         return HttpResponseNotAllowed(["GET"])
  
     # Get top 8 most borrowed books
-    # ✅ Filter by available_copies > 0 instead of status property
+    # Filter by available_copies > 0 instead of status property
     featured_books = (
         Book.objects
         .annotate(borrow_count=Count('loans'))
-        .filter(borrow_count__gt=0, available_copies__gt=0)  # ✅ Filter by available_copies
+        .filter(borrow_count__gt=0, available_copies__gt=0)  # Filter by available_copies
         .order_by('-borrow_count')[:8]
     )
  
@@ -230,10 +225,10 @@ def get_new_books(request):
         return HttpResponseNotAllowed(["GET"])
  
     # Get latest 8 books added to the system
-    # ✅ Filter by available_copies > 0 instead of status property
+    # Filter by available_copies > 0 instead of status property
     new_books = (
         Book.objects
-        .filter(available_copies__gt=0)  # ✅ Filter by available_copies
+        .filter(available_copies__gt=0)  # Filter by available_copies
         .order_by('-created_at')[:8]
     )
  
@@ -286,7 +281,7 @@ def borrow_book(request, book_id: int):
 def my_loans_current(request):
     """
     Get current loans (not yet returned)
-    GET /api/loans/my/current/ - Returns loans with return_date=None
+    GET /api/loans/my/ - Returns loans with return_date=None
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
@@ -305,7 +300,7 @@ def my_loans_current(request):
 def my_loans_history(request):
     """
     Get loan history (already returned)
-    GET /api/loans/my/history/ - Returns loans with return_date set
+    GET /api/loans/history/ - Returns loans with return_date set
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
@@ -352,10 +347,9 @@ def return_loan(request, loan_id: int):
         "available_copies": book.available_copies,
     })
 
-
-# ============================================================================
+# ----------------------------
 # Admin Book Views
-# ============================================================================
+# ----------------------------
  
 @csrf_exempt
 @admin_required
@@ -652,7 +646,7 @@ def admin_update_user(request, user_id: int):
     if "email" in body and body["email"]:
         u.email = body["email"].strip()
  
-    # Update password (optional)
+    # Update password
     if "password" in body and body["password"]:
         u.set_password(body["password"])
  
