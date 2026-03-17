@@ -625,27 +625,6 @@ def admin_create_user(request):
 
 @csrf_exempt
 @admin_required
-def admin_user_status(request, user_id: int):
-    if request.method != "PATCH":
-        return HttpResponseNotAllowed(["PATCH"])
-
-    body = _json_body(request)
-    if body is None:
-        return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
-
-    u = get_object_or_404(User, pk=user_id)
-
-    status = (body.get("status") or "").strip().lower()  # active/suspended
-    if status not in ["active", "suspended"]:
-        return JsonResponse({"ok": False, "message": "status must be 'active' or 'suspended'."}, status=400)
-
-    u.is_active = (status == "active")
-    u.save(update_fields=["is_active"])
-    return JsonResponse({"ok": True, "message": "User status updated.", "status": "Active" if u.is_active else "Suspended"})
-
-
-@csrf_exempt
-@admin_required
 def admin_user_detail(request, user_id: int):
     """
     Admin user detail, update, and delete
@@ -668,7 +647,7 @@ def admin_user_detail(request, user_id: int):
         if "email" in body and body["email"]:
             u.email = body["email"].strip()
  
-        # Update password
+        # Update password (optional)
         if "password" in body and body["password"]:
             u.set_password(body["password"])
  
@@ -707,5 +686,25 @@ def admin_user_detail(request, user_id: int):
             "message": f"User '{username}' deleted."
         })
  
+    if request.method == "PATCH":
+        body = _json_body(request)
+        if body is None:
+            return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
+ 
+        status = (body.get("status") or "").strip().lower()  # active/suspended
+        if status not in ["active", "suspended"]:
+            return JsonResponse(
+                {"ok": False, "message": "status must be 'active' or 'suspended'."},
+                status=400
+            )
+ 
+        u.is_active = (status == "active")
+        u.save(update_fields=["is_active"])
+        
+        return JsonResponse({
+            "ok": True,
+            "message": "User status updated.",
+            "status": "Active" if u.is_active else "Suspended"
+        })
  
     return HttpResponseNotAllowed(["PUT", "DELETE", "PATCH"])
