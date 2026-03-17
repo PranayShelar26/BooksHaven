@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .serializer import serialize_loan, serialize_book
 from .models import Book, Loan
 from django.db.models import Count
+from django.db.models import Q
 
 # Create
 
@@ -139,7 +140,7 @@ def get_books(request):
     qs = Book.objects.all()
  
     if q:
-        qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
+        qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
  
     if category:
         qs = qs.filter(category__iexact=category)
@@ -366,7 +367,7 @@ def admin_books(request):
         qs = Book.objects.all().order_by("-id")
         
         if q:
-            qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
+            qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
         if category:
             qs = qs.filter(category__iexact=category)
  
@@ -621,91 +622,6 @@ def admin_create_user(request):
     u.save()
     return JsonResponse({"ok": True, "message": "User created.", "user_id": u.id})
 
-@csrf_exempt
-@admin_required
-def admin_update_user(request, user_id: int):
-    """
-    Update user details
-    PUT /api/admin/users/<int:user_id>/
-    """
-    if request.method != "PUT":
-        return HttpResponseNotAllowed(["PUT"])
- 
-    u = get_object_or_404(User, pk=user_id)
- 
-    try:
-        body = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
- 
-    # Update username
-    if "username" in body and body["username"]:
-        u.username = body["username"].strip()
- 
-    # Update email
-    if "email" in body and body["email"]:
-        u.email = body["email"].strip()
- 
-    # Update password
-    if "password" in body and body["password"]:
-        u.set_password(body["password"])
- 
-    # Update membership date
-    if "membership" in body and body["membership"]:
-        try:
-            membership_date = datetime.strptime(body["membership"], "%Y-%m-%d").date()
-            u.membership = membership_date
-        except ValueError:
-            return JsonResponse({
-                "ok": False,
-                "message": "Membership date must be in YYYY-MM-DD format."
-            }, status=400)
- 
-    # Update admin status
-    if "is_admin" in body:
-        u.is_admin = bool(body["is_admin"])
- 
-    u.save()
- 
-    return JsonResponse({
-        "ok": True,
-        "message": "User updated successfully.",
-        "user": {
-            "id": u.id,
-            "username": u.username,
-            "email": u.email,
-            "membership": u.membership.isoformat() if u.membership else None,
-            "is_admin": u.is_admin,
-            "status": "Active" if u.is_active else "Suspended",
-            "books": {
-                "current": 0,
-                "total": 0,
-            }
-        }
-    })
- 
- 
-@csrf_exempt
-@admin_required
-def admin_delete_user(request, user_id: int):
-    """
-    Delete a user
-    DELETE /api/admin/users/<int:user_id>/
-    """
-    if request.method != "DELETE":
-        return HttpResponseNotAllowed(["DELETE"])
- 
-    u = get_object_or_404(User, pk=user_id)
-    username = u.username
- 
-    u.delete()
- 
-    return JsonResponse({
-        "ok": True,
-        "message": f"User '{username}' deleted successfully.",
-        "user_id": user_id,
-    })
- 
 
 @csrf_exempt
 @admin_required
@@ -752,7 +668,7 @@ def admin_user_detail(request, user_id: int):
         if "email" in body and body["email"]:
             u.email = body["email"].strip()
  
-        # Update password (optional)
+        # Update password
         if "password" in body and body["password"]:
             u.set_password(body["password"])
  
@@ -791,25 +707,5 @@ def admin_user_detail(request, user_id: int):
             "message": f"User '{username}' deleted."
         })
  
-    if request.method == "PATCH":
-        body = _json_body(request)
-        if body is None:
-            return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
- 
-        status = (body.get("status") or "").strip().lower()  # active/suspended
-        if status not in ["active", "suspended"]:
-            return JsonResponse(
-                {"ok": False, "message": "status must be 'active' or 'suspended'."},
-                status=400
-            )
- 
-        u.is_active = (status == "active")
-        u.save(update_fields=["is_active"])
-        
-        return JsonResponse({
-            "ok": True,
-            "message": "User status updated.",
-            "status": "Active" if u.is_active else "Suspended"
-        })
  
     return HttpResponseNotAllowed(["PUT", "DELETE", "PATCH"])
