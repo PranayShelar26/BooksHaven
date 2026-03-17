@@ -8,6 +8,9 @@ import AddNewBookModal from "../components/AddNewBookModal";
 import EditBookModal from "../components/EditBookModal";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 
+/**
+ * AdminPanel - Admin dashboard for managing books (CRUD operations)
+ */
 const AdminPanel = () => {
   const { search, category, setCategory, loading } = useBooks();
   const [adminBooks, setAdminBooks] = useState([]);
@@ -24,6 +27,7 @@ const AdminPanel = () => {
   });
   const [deleteBookId, setDeleteBookId] = useState(null);
 
+  // Fetch books on mount
   useEffect(() => {
     fetchBooks();
   }, []);
@@ -35,8 +39,8 @@ const AdminPanel = () => {
       .catch((err) => alert(err));
   };
 
+  // Filter books by search and category
   useEffect(() => {
-    // Apply same filtering logic as BookContext
     const filtered = adminBooks.filter((book) => {
       const matchesSearch =
         book.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -74,7 +78,6 @@ const AdminPanel = () => {
         },
       })
       .then((res) => {
-        // Show confirmation dialog with book details
         setConfirmationData({
           title: "Book Added Successfully! ✓",
           description: `"${formData.title}" by ${formData.author} has been added to the library.`,
@@ -84,7 +87,6 @@ const AdminPanel = () => {
         setShowConfirmation(true);
         setIsModalOpen(false);
 
-        // Refresh books list after a short delay
         setTimeout(() => {
           fetchBooks();
         }, 500);
@@ -105,7 +107,6 @@ const AdminPanel = () => {
         withCredentials: true,
       })
       .then((res) => {
-        // Show confirmation dialog with book details
         setConfirmationData({
           title: "Book Updated Successfully! ✓",
           description: `"${formData.title}" has been updated.`,
@@ -115,7 +116,6 @@ const AdminPanel = () => {
         setShowConfirmation(true);
         setIsEditModalOpen(false);
 
-        // Refresh books list after a short delay
         setTimeout(() => {
           fetchBooks();
         }, 500);
@@ -145,7 +145,6 @@ const AdminPanel = () => {
         .then((res) => {
           setShowConfirmation(false);
           setDeleteBookId(null);
-          // Show success message
           setTimeout(() => {
             alert("Book deleted successfully!");
             fetchBooks();
@@ -191,15 +190,14 @@ const AdminPanel = () => {
       />
 
       <div className="mt-6 sm:mt-8 flex flex-col space-y-6 sm:space-y-8 mx-auto px-4 sm:px-6 md:px-8 lg:mx-20 my-5 max-w-full">
-        {/* Header Section */}
+        {/* Header */}
         <div className="space-y-1 sm:space-y-2">
           <h1 className="font-bold text-2xl sm:text-3xl">Manage Books</h1>
           <p className="text-sm sm:text-base text-gray-600">Add, edit or delete books from library</p>
         </div>
 
-        {/* Search and Filter Section */}
+        {/* Search & Filter */}
         <div className="space-y-4">
-          {/* Search Bar and Add Button */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
               <SearchBar type="books" />
@@ -212,7 +210,6 @@ const AdminPanel = () => {
             </button>
           </div>
 
-          {/* Category Filter */}
           <div className="overflow-x-auto">
             <div className="flex gap-2 pb-2">
               <BookCatagoryList />
@@ -220,31 +217,19 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        {/* Table Section - Responsive Design */}
+        {/* Table & Card View */}
         <div className="rounded-2xl overflow-hidden border border-gray-200">
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Book
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    ISBN
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Category
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Copies
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Status
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Actions
-                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Book</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">ISBN</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Category</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Copies</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Status</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,7 +285,6 @@ const AdminPanel = () => {
                 key={book.id}
                 className="border-b border-gray-100 p-4 hover:bg-gray-50 transition-all space-y-3"
               >
-                {/* Title and Category */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm sm:text-base truncate">{book.title}</h3>
@@ -318,7 +302,6 @@ const AdminPanel = () => {
                   </span>
                 </div>
 
-                {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
                   <div>
                     <p className="text-gray-600">Category</p>
@@ -332,7 +315,6 @@ const AdminPanel = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => handleEditClick(book)}

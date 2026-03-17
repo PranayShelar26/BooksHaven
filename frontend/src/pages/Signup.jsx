@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 
+/**
+ * Signup - User registration page with form validation
+ */
 const Signup = () => {
   const {
     register,
@@ -24,6 +27,7 @@ const Signup = () => {
   const [signupData, setSignupData] = useState(null);
 
   const onSubmit = async (data) => {
+    // Validate password match
     if (confirmPassword !== data.password) {
       setError("confirmPassword", {
         type: "manual",
@@ -79,10 +83,11 @@ const Signup = () => {
       />
 
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+        {/* Logo & Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <div className="w-20  mx-auto flex shadow-xl rounded-3xl overflow-hidden justify-center">
             <img
-              alt="Your Company"
+              alt="BooksHaven"
               src={Logo}
               className="mx-auto h-full w-full  "
             />
@@ -91,6 +96,7 @@ const Signup = () => {
           <p className="text-center">Library Managment System</p>
         </div>
 
+        {/* Signup Form */}
         <div className="mt-6 p-5 shadow-sm shadow-amber-600 bg-linear-to-r from-amber-500 to-orange-600 rounded-3xl sm:mx-auto  sm:w-full sm:max-w-sm">
           <h2 className="text-2xl font-medium">Create Account!</h2>
           <div className="text-l mt-1">Register to start borrowing books</div>
@@ -106,6 +112,7 @@ const Signup = () => {
               </p>
             )}
 
+            {/* Full Name Field */}
             <div>
               <label
                 htmlFor="name"
@@ -146,6 +153,7 @@ const Signup = () => {
               </div>
             </div>
 
+            {/* Email Field */}
             <div>
               <label
                 htmlFor="email"
@@ -182,6 +190,7 @@ const Signup = () => {
               </div>
             </div>
 
+            {/* Password Field */}
             <div>
               <div className="flex items-center justify-between">
                 <label
@@ -220,6 +229,8 @@ const Signup = () => {
                 )}
               </div>
             </div>
+
+            {/* Confirm Password Field */}
             <div>
               <div className="flex items-center justify-between">
                 <label
@@ -252,6 +263,7 @@ const Signup = () => {
               </div>
             </div>
 
+            {/* Submit Button */}
             <div>
               <button
                 type="submit"
@@ -262,6 +274,7 @@ const Signup = () => {
             </div>
           </form>
 
+          {/* Login Link */}
           <p className="mt-5 text-center text-sm/6">
             Already have an account?{" "}
             <Link to="/login" className="font-semibold hover:underline ">

@@ -6,36 +6,40 @@ import BookCatagoryList from "../components/BookCatagoryList";
 import SearchBar from "../components/SearchBar";
 import { Outlet } from "react-router-dom";
 
+/**
+ * BookCatalogue - Main page for browsing books
+ * Displays search, category filters, and book grid
+ */
 const BookCatalogue = () => {
   return (
     <>
-      <div className="mt-6 sm:mt-8 px-4 sm:px-6 md:px-8 mx-auto max-w-7xl my-5 space-y-6 sm:space-y-8 md:space-y-10 w-full">
-        {/* Outlet for nested routes */}
-        <Outlet />
-
-        {/* Header Section */}
-        <div className="space-y-1 sm:space-y-2">
-          <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl">
-            Book Catalogue
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Browse collections of books
-          </p>
+      <div className="mt-8 sm:px-2 mx-20 my-5 space-y-10">
+        {/* Render nested routes */}
+        <Outlet/>
+        
+        {/* Page Header */}
+        <div>
+          <div className="space-y-2">
+            <h1 className="font-bold text-3xl">Book Catalogue</h1>
+            <h2>Browse collections of books</h2>
+          </div>
         </div>
 
-        {/* Search Bar Section */}
-        <div className="w-full">
-          <SearchBar />
+        {/* Search Bar */}
+        <div className="max-w-8xl mx-auto mb-6">
+          <SearchBar/>
         </div>
 
-        {/* Category Filter Section */}
-        <div className="w-full overflow-x-auto">
-          <BookCatagoryList />
+        {/* Category Filter */}
+        <div>
+            <BookCatagoryList/>
         </div>
 
-        {/* Books Grid Section */}
-        <div className="w-full">
-          <BookCard />
+        {/* Books Display */}
+        <div>
+          <div className="">
+            <BookCard />
+          </div>
         </div>
       </div>
     </>

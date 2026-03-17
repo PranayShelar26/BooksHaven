@@ -5,16 +5,19 @@ import BookCard from "../components/BookCard";
 import { Outlet } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 
+/**
+ * Dashboard - User home page with featured and new books
+ */
 const Dashboard = () => {
   return (
     <>
       <div className="mt-6 sm:mt-8 px-4 sm:px-6 md:px-8 mx-auto max-w-7xl space-y-8 sm:space-y-10 my-5 w-full">
-        {/* Search Bar Section */}
+        {/* Search Bar */}
         <div className="w-full">
           <SearchBar />
         </div>
 
-        {/* Outlet for nested routes */}
+        {/* Nested routes */}
         <Outlet />
 
         {/* Featured Book Section */}
@@ -22,7 +25,6 @@ const Dashboard = () => {
           <h2 className="font-bold text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-6 md:mb-8">
             Featured Book
           </h2>
-
           <BookCard />
         </div>
 
@@ -31,7 +33,6 @@ const Dashboard = () => {
           <h2 className="font-bold text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-6 md:mb-8">
             New Books
           </h2>
-
           <BookCard />
         </div>
       </div>

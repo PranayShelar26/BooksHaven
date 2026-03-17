@@ -57,7 +57,7 @@ const Login = () => {
       <ConfirmationDialog
         isOpen={showConfirmation}
         onClose={handleConfirmationClose}
-        title="Login Successful! ✓"
+        title="Login Successful! "
         description={`Welcome back, ${loginData?.username}! You have been successfully logged in.`}
         confirmText="Continue"
         isDangerous={false}

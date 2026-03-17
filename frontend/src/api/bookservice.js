@@ -22,4 +22,3 @@ export const ReturnLoan = (id) =>{
     return axios.get(`${API_URL}/loans/${id}/return/`);
 }
 
-

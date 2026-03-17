@@ -138,7 +138,7 @@ const EditBookModal = ({ isOpen, onClose, book, onSubmit }) => {
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold transition-all flex-shrink-0"
+              className="text-gray-400 hover:text-gray-600 text-2xl font-bold transition-all shrink-0"
             >
               ✕
             </button>

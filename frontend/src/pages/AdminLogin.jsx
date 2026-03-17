@@ -6,6 +6,9 @@ import axios from "axios";
 import { useUser } from "../context/UserContext";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 
+/**
+ * AdminLogin - Dedicated login page for admin users
+ */
 const AdminLogin = () => {
   const {
     register,
@@ -35,8 +38,8 @@ const AdminLogin = () => {
       );
 
       if (res.data.ok) {
+        // Verify admin role
         if (!res.data.user.is_admin) {
-          // logged in successfully but not an admin
           await axios.post("http://localhost:8000/api/auth/logout/");
           setError("apiError", {
             type: "manual",
@@ -44,6 +47,8 @@ const AdminLogin = () => {
           });
           return;
         }
+        
+        // Admin verified - proceed with login
         setUser(res.data.user);
         setLoginData({ username: data.username });
         setShowConfirmation(true);
@@ -74,7 +79,7 @@ const AdminLogin = () => {
       />
 
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-        {/* Logo Section */}
+        {/* Logo & Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <div className="w-20 mx-auto flex shadow-xl rounded-3xl overflow-hidden justify-center">
             <img alt="Books Haven" src={Logo} className="mx-auto h-full w-full" />
@@ -89,7 +94,7 @@ const AdminLogin = () => {
           <div className="text-xl mt-1">Login to continue to your account</div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-5">
-            {/* Username */}
+            {/* Username Field */}
             <div>
               <label
                 htmlFor="username"
@@ -115,7 +120,7 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            {/* Password */}
+            {/* Password Field */}
             <div>
               <div className="flex items-center justify-between">
                 <label
@@ -141,6 +146,7 @@ const AdminLogin = () => {
                   </p>
                 )}
               </div>
+
               {/* API Error */}
               {errors.apiError && (
                 <p className="text-red-600 mt-1 text-sm">
@@ -174,7 +180,7 @@ const AdminLogin = () => {
             </div>
           </form>
 
-          {/* Signup Link */}
+          {/* User Login Link */}
           <p className="mt-5 text-center text-sm/6">
             Not an admin?{" "}
             <Link to="/login" className="font-semibold hover:underline">

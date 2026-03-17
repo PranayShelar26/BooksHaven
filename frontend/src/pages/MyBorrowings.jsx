@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import BorrowedBookList from "../components/BorrowedBookList";
 
+/**
+ * MyBorrowings - User page for viewing current and past borrowings
+ */
 const MyBorrowings = () => {
   const [tab, setTab] = useState("current");
 
@@ -8,7 +11,7 @@ const MyBorrowings = () => {
     <>
       <div className="mt-6 sm:mt-8 px-4 sm:px-6 md:px-8 mx-auto max-w-7xl my-5 flex flex-col space-y-6 sm:space-y-8 w-full">
 
-        {/* Header Section */}
+        {/* Header */}
         <div className="space-y-1 sm:space-y-2">
           <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl">
             My Borrowings
@@ -43,7 +46,7 @@ const MyBorrowings = () => {
           </button>
         </div>
 
-        {/* Content Section */}
+        {/* Content */}
         <div className="flex flex-col gap-4 sm:gap-5 w-full">
           {tab === "current" && (
             <BorrowedBookList type="current" />

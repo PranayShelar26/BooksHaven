@@ -5,6 +5,9 @@ import book_img from "../assets/book_banner.png";
 import Spinner from "../components/Spinner.jsx";
 import BorrowBookModal from "../components/BorrowBookModal";
 
+/**
+ * BookDetail - Detailed view of a single book with borrowing option
+ */
 const BookDetail = () => {
   const { id } = useParams();
   const [book, setBook] = useState(null);
@@ -14,6 +17,7 @@ const BookDetail = () => {
 
   const from = location.state?.from || "/dashboard";
 
+  // Fetch book on mount
   useEffect(() => {
     getBook(id).then((res) => {
       setBook(res.data);
@@ -22,7 +26,6 @@ const BookDetail = () => {
   }, [id]);
 
   const handleBorrowSuccess = () => {
-    // Optionally navigate back or refresh
     console.log("Book borrowed successfully");
   };
 
@@ -57,10 +60,11 @@ const BookDetail = () => {
           </button>
         </div>
 
-        {/* Main Layout */}
+        {/* Main Content */}
         <div className="grid grid-cols-1 md:grid-cols-[40%_60%] gap-4 sm:gap-6 md:gap-8 lg:gap-10">
-          {/* Book Image */}
-          <div className="rounded-lg sm:rounded-xl overflow-hidden h-80 sm:h-96 md:h-auto md:min-h-96 lg:min-h-[500px]">
+          
+          {/* Book Cover */}
+          <div className="rounded-lg sm:rounded-xl overflow-hidden h-80 sm:h-96 md:h-auto md:min-h-96 lg:min-h-125">
             <img
               src={book.cover ? `http://localhost:8000${book.cover}` : book_img}
               alt={book.title}
@@ -68,19 +72,17 @@ const BookDetail = () => {
             />
           </div>
 
-          {/* Book Details */}
+          {/* Book Info */}
           <div className="flex flex-col gap-3 sm:gap-4 md:gap-5">
-            {/* Title */}
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
               {book.title}
             </h1>
 
-            {/* Author */}
             <h2 className="text-base sm:text-lg md:text-xl text-gray-700">
               <span className="text-black font-semibold">Author:</span> {book.author}
             </h2>
 
-            {/* Availability Status */}
+            {/* Availability */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
               <span
                 className={`text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full ${
@@ -108,7 +110,7 @@ const BookDetail = () => {
               </p>
             </div>
 
-            {/* Book Info Box */}
+            {/* Book Details Box */}
             <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-gray-200 rounded-lg sm:rounded-xl">
               <h1 className="text-base sm:text-lg md:text-xl font-semibold">Book Details</h1>
 
@@ -143,7 +145,7 @@ const BookDetail = () => {
               </div>
             </div>
 
-            {/* Buttons */}
+            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-auto">
               <button
                 onClick={() => setShowBorrowModal(true)}

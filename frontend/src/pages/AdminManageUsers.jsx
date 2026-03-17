@@ -9,6 +9,9 @@ import EditUserModal from "../components/EditUserModal";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 import UserSearchBar from "../components/UserSearchBar";
 
+/**
+ * AdminManageUsers - Admin dashboard for managing users (CRUD operations)
+ */
 const AdminManageUsers = () => {
   const { users, setUsers, loading, search } = useUser();
   const [activeStatus, setActiveStatus] = useState("All");
@@ -25,6 +28,7 @@ const AdminManageUsers = () => {
   });
   const [deleteUserId, setDeleteUserId] = useState(null);
 
+  // Fetch users on mount
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -50,7 +54,6 @@ const AdminManageUsers = () => {
         ? users
         : users.filter((user) => user.status === activeStatus);
 
-    // Apply search filter
     filtered = filtered.filter(
       (user) =>
         user.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -68,7 +71,6 @@ const AdminManageUsers = () => {
       })
       .then((res) => {
         if (res.data.ok) {
-          // Show confirmation dialog with user details
           setConfirmationData({
             title: "User Created Successfully ✓",
             description: `User "${formData.username}" has been added to the system.`,
@@ -78,7 +80,6 @@ const AdminManageUsers = () => {
           setShowConfirmation(true);
           setIsModalOpen(false);
 
-          // Refresh users list after a short delay
           setTimeout(() => {
             fetchUsers();
           }, 500);
@@ -192,15 +193,14 @@ const AdminManageUsers = () => {
       />
 
       <div className="mt-6 sm:mt-8 flex flex-col space-y-6 sm:space-y-8 mx-auto px-4 sm:px-6 md:px-8 lg:mx-20 my-5 max-w-full">
-        {/* Header Section */}
+        {/* Header */}
         <div className="space-y-1 sm:space-y-2">
           <h1 className="font-bold text-2xl sm:text-3xl">Manage Users</h1>
           <p className="text-sm sm:text-base text-gray-600">View and manage users</p>
         </div>
 
-        {/* Search and Filter Section */}
+        {/* Search & Filter */}
         <div className="space-y-4">
-          {/* Search Bar and Add Button */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
               <UserSearchBar />
@@ -213,7 +213,6 @@ const AdminManageUsers = () => {
             </button>
           </div>
 
-          {/* Status Filter Buttons */}
           <div className="overflow-x-auto">
             <div className="flex gap-2 pb-2">
               {statuses.map((status) => (
@@ -234,31 +233,19 @@ const AdminManageUsers = () => {
           </div>
         </div>
 
-        {/* Table Section - Responsive Design */}
+        {/* Table & Card View */}
         <div className="rounded-2xl overflow-hidden border border-gray-200">
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    User
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Contact
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Membership
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Books
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Status
-                  </th>
-                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
-                    Actions
-                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">User</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Contact</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Membership</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Books</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Status</th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -315,7 +302,6 @@ const AdminManageUsers = () => {
                 key={user.id}
                 className="border-b border-gray-100 p-4 hover:bg-gray-50 transition-all space-y-3"
               >
-                {/* Username and Status */}
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm sm:text-base truncate">
@@ -335,7 +321,6 @@ const AdminManageUsers = () => {
                   </span>
                 </div>
 
-                {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
                   <div>
                     <p className="text-gray-600">Membership</p>
@@ -349,7 +334,6 @@ const AdminManageUsers = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => handleEditClick(user)}

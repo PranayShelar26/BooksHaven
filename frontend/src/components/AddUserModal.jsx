@@ -41,7 +41,7 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Add New User</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-red-500 text-2xl sm:text-3xl font-bold transition-all flex-shrink-0 ml-2"
+            className="text-gray-400 hover:text-red-500 text-2xl sm:text-3xl font-bold transition-all shrink-0 ml-2"
           >
             ✕
           </button>
