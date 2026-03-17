@@ -39,12 +39,7 @@ Backend
 
 Database
 
-* SQLite / PostgreSQL
-
-External API
-
-* Google Books API (for book metadata)
-
+* SQLite 
 ---
 
 ## 🏗 Project Structure
