@@ -21,7 +21,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-
+            <Route path="/" element={<Login/>}></Route>
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/book-catalogue" element={<BookCatalogue />} />
@@ -42,7 +42,7 @@ function App() {
 
 const LayoutWrapper = ({ children }) => {
   const location = useLocation(); // <-- use React Router hook
-  const hideNavbarPages = ["/login", "/signup",'/admin-login','/admin-dashboard','/manage-users'];
+  const hideNavbarPages = ["/login", '/',"/signup",'/admin-login','/admin-dashboard','/manage-users'];
   const adminPages = ['/admin-dashboard','/manage-users']
   
   const showNavbar = !hideNavbarPages.includes(location.pathname)

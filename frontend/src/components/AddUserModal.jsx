@@ -30,24 +30,29 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Add New User</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
+
+      {/* Modal */}
+      <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-lg z-50">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Add New User</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-red-500 text-3xl font-bold transition-all"
+            className="text-gray-400 hover:text-red-500 text-2xl sm:text-3xl font-bold transition-all flex-shrink-0 ml-2"
           >
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Row 1: Username and Email */}
-          <div className="gap-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          {/* Username and Email */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Username
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                Username <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -55,12 +60,13 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="Enter username"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -68,15 +74,16 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="Enter email"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm"
               />
             </div>
           </div>
 
-          {/* Row 2: Password and Admin Checkbox */}
-          <div className="gap-6">
+          {/* Password and Admin Checkbox */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                 Password
               </label>
               <input
@@ -84,19 +91,20 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="Enter password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs sm:text-sm"
               />
             </div>
-            <div className="flex mt-6">
-              <label className="flex items-center space-x-2 cursor-pointer">
+            <div className="flex items-end">
+              <label className="flex items-center space-x-2 sm:space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
                   name="is_admin"
                   checked={formData.is_admin}
                   onChange={handleChange}
-                  className="w-4 h-4 accent-amber-500 rounded"
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
                 />
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-xs sm:text-sm font-semibold text-gray-700">
                   Admin User
                 </span>
               </label>
@@ -104,17 +112,17 @@ const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-4 pt-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 pt-4 sm:pt-6 md:pt-8">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"
+              className="px-4 sm:px-6 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all text-xs sm:text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-white font-semibold rounded-lg transition-all"
+              className="px-4 sm:px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-all text-xs sm:text-sm"
             >
               Add User
             </button>

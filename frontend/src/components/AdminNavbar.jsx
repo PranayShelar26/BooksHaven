@@ -9,9 +9,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogoutClick = () => {
     setShowConfirmation(true);
+    setMobileMenuOpen(false);
   };
 
   const handleConfirmLogout = async () => {
@@ -38,8 +40,13 @@ const Navbar = () => {
 
   const linkClass = ({ isActive }) =>
     isActive
-      ? 'px-4 py-2 bg-amber-700 text-white font-medium rounded-2xl'
-      : 'px-4 py-2 bg-white text-black font-medium hover:bg-black hover:text-white rounded-2xl'
+      ? 'px-3 sm:px-4 py-2 bg-amber-700 text-white font-medium rounded-2xl text-sm sm:text-base'
+      : 'px-3 sm:px-4 py-2 bg-white text-black font-medium hover:bg-black hover:text-white rounded-2xl transition-all text-sm sm:text-base';
+
+  const mobileLinkClass = ({ isActive }) =>
+    isActive
+      ? 'block text-center py-2 bg-amber-700 text-white font-medium text-base'
+      : 'block text-center py-2 border-b border-orange-400 text-black font-medium hover:bg-black hover:text-white transition-all text-base';
 
   return (
     <>
@@ -54,25 +61,85 @@ const Navbar = () => {
         isDangerous={true}
       />
 
-      <div className='sticky top-0 z-50 flex flex-row justify-between items-center bg-linear-to-r from-amber-500 to-orange-600 py-2 px-5'>
-        <div>
-          <div className='font-medium text-white'>BooksHaven</div>
-          <div className='text-white font-light'>AdminPanel</div>
-        </div>
+      <div className='sticky top-0 z-50 bg-linear-to-r from-amber-500 to-orange-600 py-2 sm:py-3 px-0'>
+        {/* Main navbar content */}
+        <div className='flex flex-row justify-between items-center px-4 sm:px-5'>
+          {/* Logo */}
+          <div className='shrink-0'>
+            <div className='font-medium text-white text-sm sm:text-base'>BooksHaven</div>
+            <div className='text-white font-light text-xs sm:text-sm'>AdminPanel</div>
+          </div>
 
-        <div className='flex flex-row gap-4'>
-          <NavLink to="/admin-dashboard" className={linkClass}>Manage Books</NavLink>
-          <NavLink to="/manage-users" className={linkClass}>Manage Users</NavLink>
-        </div>
+          {/* Desktop Navigation */}
+          <div className='hidden md:flex flex-row gap-3 lg:gap-4'>
+            <NavLink to="/admin-dashboard" className={linkClass}>Manage Books</NavLink>
+            <NavLink to="/manage-users" className={linkClass}>Manage Users</NavLink>
+          </div>
 
-        <div>
+          {/* Desktop Logout Button */}
           <button
             onClick={handleLogoutClick}
             disabled={loading}
-            className='px-4 py-2 border-2 cursor-pointer text-white font-medium hover:bg-white hover:border-white hover:text-black rounded-xl transition-all disabled:opacity-50'
+            className='hidden md:block px-4 py-2 border-2 border-white cursor-pointer text-white font-medium hover:bg-white hover:border-white hover:text-black rounded-xl transition-all disabled:opacity-50 text-sm lg:text-base'
           >
             {loading ? "Logging out..." : "Logout"}
           </button>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className='md:hidden flex flex-col gap-1.5 p-2'
+            aria-label="Toggle mobile menu"
+          >
+            <span
+              className={`w-6 h-0.5 bg-white transition-all ${
+                mobileMenuOpen ? 'rotate-45 translate-y-2' : ''
+              }`}
+            ></span>
+            <span
+              className={`w-6 h-0.5 bg-white transition-all ${
+                mobileMenuOpen ? 'opacity-0' : ''
+              }`}
+            ></span>
+            <span
+              className={`w-6 h-0.5 bg-white transition-all ${
+                mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''
+              }`}
+            ></span>
+          </button>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className='mt-3 pb-2 border-t border-orange-700 pt-3 px-4 space-y-2'>
+            <NavLink
+              to="/admin-dashboard"
+              className={mobileLinkClass}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Manage Books
+            </NavLink>
+            <NavLink
+              to="/manage-users"
+              className={mobileLinkClass}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Manage Users
+            </NavLink>
+
+            {/* Mobile Logout Button */}
+            <button
+              onClick={handleLogoutClick}
+              disabled={loading}
+              className='w-full px-4 py-2 cursor-pointer text-white font-medium bg-red-600 hover:bg-red-700 transition-all disabled:opacity-50 text-base rounded mt-2'
+            >
+              {loading ? "Logging out..." : "Logout"}
+            </button>
+          </div>
         </div>
       </div>
     </>

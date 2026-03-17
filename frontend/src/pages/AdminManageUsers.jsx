@@ -191,113 +191,182 @@ const AdminManageUsers = () => {
         isDangerous={confirmationData.isDangerous}
       />
 
-      <div className="mt-8 flex flex-col space-y-8 mx-20 my-5">
-        <div className="space-y-2">
-          <h1 className="font-bold text-3xl">Manage Users</h1>
-          <p>View and manage users</p>
+      <div className="mt-6 sm:mt-8 flex flex-col space-y-6 sm:space-y-8 mx-auto px-4 sm:px-6 md:px-8 lg:mx-20 my-5 max-w-full">
+        {/* Header Section */}
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="font-bold text-2xl sm:text-3xl">Manage Users</h1>
+          <p className="text-sm sm:text-base text-gray-600">View and manage users</p>
         </div>
 
-        <div>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+        {/* Search and Filter Section */}
+        <div className="space-y-4">
+          {/* Search Bar and Add Button */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
               <UserSearchBar />
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-6 rounded-lg transition-all whitespace-nowrap"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition-all whitespace-nowrap text-sm sm:text-base w-full sm:w-auto"
             >
               + Add New User
             </button>
           </div>
 
           {/* Status Filter Buttons */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {statuses.map((status) => (
-              <button
-                key={status}
-                onClick={() => setActiveStatus(status)}
-                className={`py-2 px-5 rounded-xl font-semibold cursor-pointer transition-all
-                  ${
-                    activeStatus === status
-                      ? "bg-amber-500 text-white"
-                      : "bg-gray-200 hover:bg-amber-400 hover:text-white"
-                  }`}
-              >
-                {status}
-              </button>
-            ))}
+          <div className="overflow-x-auto">
+            <div className="flex gap-2 pb-2">
+              {statuses.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setActiveStatus(status)}
+                  className={`py-2 px-3 sm:px-5 rounded-xl font-semibold cursor-pointer transition-all whitespace-nowrap text-xs sm:text-sm
+                    ${
+                      activeStatus === status
+                        ? "bg-amber-500 text-white"
+                        : "bg-gray-200 hover:bg-amber-400 hover:text-white"
+                    }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
+        {/* Table Section - Responsive Design */}
         <div className="rounded-2xl overflow-hidden border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  User
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Contact
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Membership
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Books
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Status
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-all"
-                >
-                  <td className="px-6 py-3 font-semibold">{user.username}</td>
-                  <td className="px-6 py-3 text-gray-600">{user.email}</td>
-                  <td className="px-6 py-3 text-gray-600">{user.membership}</td>
-                  <td className="px-6 py-3 text-gray-600">
-                    <div>Current: {user.books.current}</div>
-                    <div>Total: {user.books.total}</div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold
-              ${
-                user.status === "Active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditClick(user)}
-                        className="px-3 py-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(user)}
-                        className="px-3 py-1 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    User
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Contact
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Membership
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Books
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Status
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-all"
+                  >
+                    <td className="px-4 lg:px-6 py-3 font-semibold text-sm">{user.username}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{user.email}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{user.membership}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">
+                      <div>Current: {user.books.current}</div>
+                      <div>Total: {user.books.total}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold
+                        ${
+                          user.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3">
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleEditClick(user)}
+                          className="px-3 py-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(user)}
+                          className="px-3 py-1 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="border-b border-gray-100 p-4 hover:bg-gray-50 transition-all space-y-3"
+              >
+                {/* Username and Status */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm sm:text-base truncate">
+                      {user.username}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 truncate">{user.email}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap
+                      ${
+                        user.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                  >
+                    {user.status}
+                  </span>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                  <div>
+                    <p className="text-gray-600">Membership</p>
+                    <p className="font-medium">{user.membership}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Books</p>
+                    <p className="font-medium">
+                      {user.books.current}/{user.books.total}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => handleEditClick(user)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(user)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </>

@@ -190,98 +190,166 @@ const AdminPanel = () => {
         isDangerous={confirmationData.isDangerous}
       />
 
-      <div className="mt-8 flex flex-col space-y-8 mx-20 my-5">
-        <div className="space-y-2">
-          <h1 className="font-bold text-3xl">Manage Books</h1>
-          <p>Add, edit or delete books from library</p>
+      <div className="mt-6 sm:mt-8 flex flex-col space-y-6 sm:space-y-8 mx-auto px-4 sm:px-6 md:px-8 lg:mx-20 my-5 max-w-full">
+        {/* Header Section */}
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="font-bold text-2xl sm:text-3xl">Manage Books</h1>
+          <p className="text-sm sm:text-base text-gray-600">Add, edit or delete books from library</p>
         </div>
 
-        <div>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
+        {/* Search and Filter Section */}
+        <div className="space-y-4">
+          {/* Search Bar and Add Button */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
               <SearchBar type="books" />
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-6 rounded-lg transition-all whitespace-nowrap"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition-all whitespace-nowrap text-sm sm:text-base w-full sm:w-auto"
             >
               + Add New Book
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-6">
-            <BookCatagoryList />
+          {/* Category Filter */}
+          <div className="overflow-x-auto">
+            <div className="flex gap-2 pb-2">
+              <BookCatagoryList />
+            </div>
           </div>
         </div>
 
+        {/* Table Section - Responsive Design */}
         <div className="rounded-2xl overflow-hidden border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Book
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  ISBN
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Category
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Copies
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Status
-                </th>
-                <th className="text-left px-6 py-3 font-semibold text-gray-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAdminBooks.map((book) => (
-                <tr
-                  key={book.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-all"
-                >
-                  <td className="px-6 py-3 font-semibold">{book.title}</td>
-                  <td className="px-6 py-3 text-gray-600">{book.isbn}</td>
-                  <td className="px-6 py-3 text-gray-600">{book.category}</td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {book.available_copies}/{book.total_copies}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold
-                ${
-                  book.status === "Available"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-                    >
-                      {book.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditClick(book)}
-                        className="px-3 py-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(book)}
-                        className="px-3 py-1 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Book
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    ISBN
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Category
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Copies
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Status
+                  </th>
+                  <th className="text-left px-4 lg:px-6 py-3 font-semibold text-gray-600">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredAdminBooks.map((book) => (
+                  <tr
+                    key={book.id}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-all"
+                  >
+                    <td className="px-4 lg:px-6 py-3 font-semibold text-sm">{book.title}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{book.isbn}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{book.category}</td>
+                    <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">
+                      {book.available_copies}/{book.total_copies}
+                    </td>
+                    <td className="px-4 lg:px-6 py-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold
+                      ${
+                        book.status === "Available"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                      >
+                        {book.status}
+                      </span>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3">
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleEditClick(book)}
+                          className="px-3 py-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(book)}
+                          className="px-3 py-1 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            {filteredAdminBooks.map((book) => (
+              <div
+                key={book.id}
+                className="border-b border-gray-100 p-4 hover:bg-gray-50 transition-all space-y-3"
+              >
+                {/* Title and Category */}
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm sm:text-base truncate">{book.title}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{book.isbn}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap
+                    ${
+                      book.status === "Available"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {book.status}
+                  </span>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                  <div>
+                    <p className="text-gray-600">Category</p>
+                    <p className="font-medium">{book.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Copies</p>
+                    <p className="font-medium">
+                      {book.available_copies}/{book.total_copies}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => handleEditClick(book)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(book)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </>

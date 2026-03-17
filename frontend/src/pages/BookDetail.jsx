@@ -39,7 +39,7 @@ const BookDetail = () => {
         onBorrowSuccess={handleBorrowSuccess}
       />
 
-      <div className="mt-8 mx-40 my-5 space-y-8 min-h-screen ">
+      <div className="mt-6 sm:mt-8 px-4 sm:px-6 md:px-8 mx-auto max-w-6xl my-5 space-y-6 sm:space-y-8 min-h-screen w-full">
 
         {/* Back Button */}
         <div>
@@ -51,16 +51,16 @@ const BookDetail = () => {
                 navigate(-1);
               }
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold hover:cursor-pointer transition-all"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg sm:rounded-xl font-semibold hover:cursor-pointer transition-all text-xs sm:text-sm"
           >
             ← Back
           </button>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-[40%_60%] lg:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-[40%_60%] gap-4 sm:gap-6 md:gap-8 lg:gap-10">
           {/* Book Image */}
-          <div className="rounded-xl overflow-hidden lg:h-150">
+          <div className="rounded-lg sm:rounded-xl overflow-hidden h-80 sm:h-96 md:h-auto md:min-h-96 lg:min-h-[500px]">
             <img
               src={book.cover ? `http://localhost:8000${book.cover}` : book_img}
               alt={book.title}
@@ -69,17 +69,21 @@ const BookDetail = () => {
           </div>
 
           {/* Book Details */}
-          <div className="flex flex-col lg:gap-5">
-            <h1 className="text-3xl font-bold">{book.title}</h1>
+          <div className="flex flex-col gap-3 sm:gap-4 md:gap-5">
+            {/* Title */}
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              {book.title}
+            </h1>
 
-            <h2 className="text-xl text-gray-700">
-              <span className="text-black text-lg">Author:</span> {book.author}
+            {/* Author */}
+            <h2 className="text-base sm:text-lg md:text-xl text-gray-700">
+              <span className="text-black font-semibold">Author:</span> {book.author}
             </h2>
 
             {/* Availability Status */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
               <span
-                className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                className={`text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full ${
                   book.available_copies > 0
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
@@ -90,60 +94,61 @@ const BookDetail = () => {
                   : "Out of Stock"}
               </span>
               {book.total_copies && (
-                <span className="text-sm text-gray-600">
+                <span className="text-xs sm:text-sm text-gray-600">
                   ({book.available_copies}/{book.total_copies})
                 </span>
               )}
             </div>
 
+            {/* Description */}
             <div>
-              <h3 className="text-lg font-semibold">Description</h3>
-              <p className="mt-2 text-gray-700 leading-relaxed">
+              <h3 className="text-base sm:text-lg font-semibold">Description</h3>
+              <p className="mt-2 text-xs sm:text-sm md:text-base text-gray-700 leading-relaxed">
                 {book.description || "No description available"}
               </p>
             </div>
 
             {/* Book Info Box */}
-            <div className="flex flex-col gap-4 p-5 bg-gray-200 rounded-xl">
-              <h1 className="text-xl font-semibold">Book Details</h1>
+            <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-gray-200 rounded-lg sm:rounded-xl">
+              <h1 className="text-base sm:text-lg md:text-xl font-semibold">Book Details</h1>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Pages</div>
                 <div>{book.pages || "N/A"}</div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Published Date</div>
                 <div>{book.published_date || "N/A"}</div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Publisher</div>
-                <div>{book.publisher || "N/A"}</div>
+                <div className="text-right">{book.publisher || "N/A"}</div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Category</div>
                 <div>{book.category || "Uncategorized"}</div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Language</div>
                 <div>{book.language || "English"}</div>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Borrowing Duration</div>
-                <div className="text-amber-600 font-semibold">30   Days</div>
+                <div className="text-amber-600 font-semibold">30 Days</div>
               </div>
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 mt-auto">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-auto">
               <button
                 onClick={() => setShowBorrowModal(true)}
                 disabled={book.available_copies <= 0}
-                className={`p-3 w-full rounded-xl font-bold text-white transition ${
+                className={`p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm ${
                   book.available_copies > 0
                     ? "bg-amber-500 hover:bg-amber-600 cursor-pointer"
                     : "bg-gray-400 cursor-not-allowed opacity-50"
@@ -152,7 +157,7 @@ const BookDetail = () => {
                 {book.available_copies > 0 ? "Borrow" : "Not Available"}
               </button>
 
-              <button className="p-3 border border-gray-400 hover:bg-gray-200 w-full rounded-xl font-bold transition">
+              <button className="p-2 sm:p-3 border border-gray-400 hover:bg-gray-200 w-full rounded-lg sm:rounded-xl font-bold transition text-xs sm:text-sm">
                 Add to Wishlist
               </button>
             </div>
