@@ -210,3 +210,4 @@ backend/.DS_Store
 backend/db.sqlite3
 __pycache__/
 *.pyc
+.DS_Store

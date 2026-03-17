@@ -8,7 +8,7 @@ from .views import (
     borrow_book, return_loan, my_loans_current, my_loans_history,
     # admin
     admin_books, admin_book_detail,
-    admin_users, admin_create_user, admin_user_status, admin_user_detail
+    admin_users, admin_create_user, admin_user_detail
 )
 
 urlpatterns = [
@@ -35,5 +35,4 @@ urlpatterns = [
     path("admin/users/", admin_users),
     path("admin/users/create/", admin_create_user),
     path("admin/users/<int:user_id>/", admin_user_detail),
-    path("admin/users/<int:user_id>/status/", admin_user_status),
 ]

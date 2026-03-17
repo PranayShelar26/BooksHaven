@@ -11,16 +11,17 @@ from django.views.decorators.csrf import csrf_exempt
 from .serializer import serialize_loan, serialize_book
 from .models import Book, Loan
 from django.db.models import Count
+from django.db.models import Q
 
-# Create your views here.
+# Create
 
 
 
 def _json_body(request):
     try:
-        raw = request.body.decode("utf-8") or "{}"
-        return json.loads(raw)
-    except json.JSONDecodeError:
+        raw = request.body.decode("utf-8") if request.body else "{}"
+        return json.loads(raw or "{}")
+    except (UnicodeDecodeError, json.JSONDecodeError):
         return None
 
 
@@ -72,11 +73,6 @@ def auth_register(request):
         "user": {"id": user.id, "username": user.username, "email": user.email},
     })
 
-def _json_body(request):
-    try:
-        return json.loads(request.body)
-    except (ValueError, TypeError):
-        return None
     
 @csrf_exempt
 def auth_login(request):
@@ -139,12 +135,12 @@ def get_books(request):
  
     q = (request.GET.get("q") or "").strip()
     category = (request.GET.get("category") or "").strip()
-    sort = (request.GET.get("sort") or "").strip()  # optional: title/created_at
+    sort = (request.GET.get("sort") or "").strip() 
  
     qs = Book.objects.all()
  
     if q:
-        qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
+        qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
  
     if category:
         qs = qs.filter(category__iexact=category)
@@ -152,7 +148,7 @@ def get_books(request):
     if sort == "title":
         qs = qs.order_by("title")
     else:
-        qs = qs.order_by("-created_at", "-id")  # default: newest first
+        qs = qs.order_by("-created_at", "-id")
  
     data = []
     for b in qs:
@@ -209,11 +205,11 @@ def get_featured_books(request):
         return HttpResponseNotAllowed(["GET"])
  
     # Get top 8 most borrowed books
-    # ✅ Filter by available_copies > 0 instead of status property
+    # Filter by available_copies > 0 instead of status property
     featured_books = (
         Book.objects
         .annotate(borrow_count=Count('loans'))
-        .filter(borrow_count__gt=0, available_copies__gt=0)  # ✅ Filter by available_copies
+        .filter(borrow_count__gt=0, available_copies__gt=0)  # Filter by available_copies
         .order_by('-borrow_count')[:8]
     )
  
@@ -230,10 +226,10 @@ def get_new_books(request):
         return HttpResponseNotAllowed(["GET"])
  
     # Get latest 8 books added to the system
-    # ✅ Filter by available_copies > 0 instead of status property
+    # Filter by available_copies > 0 instead of status property
     new_books = (
         Book.objects
-        .filter(available_copies__gt=0)  # ✅ Filter by available_copies
+        .filter(available_copies__gt=0)  # Filter by available_copies
         .order_by('-created_at')[:8]
     )
  
@@ -286,7 +282,7 @@ def borrow_book(request, book_id: int):
 def my_loans_current(request):
     """
     Get current loans (not yet returned)
-    GET /api/loans/my/current/ - Returns loans with return_date=None
+    GET /api/loans/my/ - Returns loans with return_date=None
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
@@ -305,7 +301,7 @@ def my_loans_current(request):
 def my_loans_history(request):
     """
     Get loan history (already returned)
-    GET /api/loans/my/history/ - Returns loans with return_date set
+    GET /api/loans/history/ - Returns loans with return_date set
     """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
@@ -352,10 +348,9 @@ def return_loan(request, loan_id: int):
         "available_copies": book.available_copies,
     })
 
-
-# ============================================================================
+# ----------------------------
 # Admin Book Views
-# ============================================================================
+# ----------------------------
  
 @csrf_exempt
 @admin_required
@@ -372,7 +367,7 @@ def admin_books(request):
         qs = Book.objects.all().order_by("-id")
         
         if q:
-            qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
+            qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
         if category:
             qs = qs.filter(category__iexact=category)
  
@@ -626,112 +621,6 @@ def admin_create_user(request):
     u.is_active = True
     u.save()
     return JsonResponse({"ok": True, "message": "User created.", "user_id": u.id})
-
-@csrf_exempt
-@admin_required
-def admin_update_user(request, user_id: int):
-    """
-    Update user details
-    PUT /api/admin/users/<int:user_id>/
-    """
-    if request.method != "PUT":
-        return HttpResponseNotAllowed(["PUT"])
- 
-    u = get_object_or_404(User, pk=user_id)
- 
-    try:
-        body = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
- 
-    # Update username
-    if "username" in body and body["username"]:
-        u.username = body["username"].strip()
- 
-    # Update email
-    if "email" in body and body["email"]:
-        u.email = body["email"].strip()
- 
-    # Update password (optional)
-    if "password" in body and body["password"]:
-        u.set_password(body["password"])
- 
-    # Update membership date
-    if "membership" in body and body["membership"]:
-        try:
-            membership_date = datetime.strptime(body["membership"], "%Y-%m-%d").date()
-            u.membership = membership_date
-        except ValueError:
-            return JsonResponse({
-                "ok": False,
-                "message": "Membership date must be in YYYY-MM-DD format."
-            }, status=400)
- 
-    # Update admin status
-    if "is_admin" in body:
-        u.is_admin = bool(body["is_admin"])
- 
-    u.save()
- 
-    return JsonResponse({
-        "ok": True,
-        "message": "User updated successfully.",
-        "user": {
-            "id": u.id,
-            "username": u.username,
-            "email": u.email,
-            "membership": u.membership.isoformat() if u.membership else None,
-            "is_admin": u.is_admin,
-            "status": "Active" if u.is_active else "Suspended",
-            "books": {
-                "current": 0,
-                "total": 0,
-            }
-        }
-    })
- 
- 
-@csrf_exempt
-@admin_required
-def admin_delete_user(request, user_id: int):
-    """
-    Delete a user
-    DELETE /api/admin/users/<int:user_id>/
-    """
-    if request.method != "DELETE":
-        return HttpResponseNotAllowed(["DELETE"])
- 
-    u = get_object_or_404(User, pk=user_id)
-    username = u.username
- 
-    u.delete()
- 
-    return JsonResponse({
-        "ok": True,
-        "message": f"User '{username}' deleted successfully.",
-        "user_id": user_id,
-    })
- 
-
-@csrf_exempt
-@admin_required
-def admin_user_status(request, user_id: int):
-    if request.method != "PATCH":
-        return HttpResponseNotAllowed(["PATCH"])
-
-    body = _json_body(request)
-    if body is None:
-        return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
-
-    u = get_object_or_404(User, pk=user_id)
-
-    status = (body.get("status") or "").strip().lower()  # active/suspended
-    if status not in ["active", "suspended"]:
-        return JsonResponse({"ok": False, "message": "status must be 'active' or 'suspended'."}, status=400)
-
-    u.is_active = (status == "active")
-    u.save(update_fields=["is_active"])
-    return JsonResponse({"ok": True, "message": "User status updated.", "status": "Active" if u.is_active else "Suspended"})
 
 
 @csrf_exempt
