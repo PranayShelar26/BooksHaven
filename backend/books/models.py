@@ -3,25 +3,98 @@ from django.db import models
 from django.utils import timezone
 
 
+
+
 class Book(models.Model):
+    LANGUAGE_CHOICES = [
+        ('English', 'English'),
+        ('Spanish', 'Spanish'),
+        ('French', 'French'),
+        ('German', 'German'),
+        ('Chinese', 'Chinese'),
+        ('Japanese', 'Japanese'),
+        ('Hindi', 'Hindi'),
+        ('Other', 'Other'),
+    ]
+ 
+    CATEGORY_CHOICES = [
+        ('Fiction', 'Fiction'),
+        ('Non-Fiction', 'Non-Fiction'),
+        ('Science', 'Science'),
+        ('History', 'History'),
+        ('Biography', 'Biography'),
+        ('Mystery', 'Mystery'),
+        ('Romance', 'Romance'),
+        ('Thriller', 'Thriller'),
+        ('Fantasy', 'Fantasy'),
+        ('Science Fiction', 'Science Fiction'),
+        ('Children', 'Children'),
+        ('Young Adult', 'Young Adult'),
+        ('Poetry', 'Poetry'),
+        ('Drama', 'Drama'),
+        ('Self-Help', 'Self-Help'),
+        ('Business', 'Business'),
+        ('Technology', 'Technology'),
+        ('Art & Design', 'Art & Design'),
+        ('Cooking', 'Cooking'),
+        ('Sports', 'Sports'),
+        ('Travel', 'Travel'),
+        ('Education', 'Education'),
+        ('Philosophy', 'Philosophy'),
+        ('Psychology', 'Psychology'),
+        ('Religion', 'Religion'),
+        ('Other', 'Other'),
+    ]
+ 
+    # Basic Information
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255, blank=True)
-    isbn = models.CharField(max_length=13, blank=True)
-
-    category = models.CharField(max_length=100, blank=True)
+    isbn = models.CharField(max_length=13, blank=True, unique=True)
+    
+    # Details
+    category = models.CharField(
+        max_length=100,
+        choices=CATEGORY_CHOICES,
+        blank=True,
+        default='Other'
+    )
     description = models.TextField(blank=True)
+    publisher = models.CharField(max_length=255, blank=True)
+    published_date = models.DateField(null=True, blank=True)
+    pages = models.PositiveIntegerField(null=True, blank=True)
+    language = models.CharField(
+        max_length=50,
+        choices=LANGUAGE_CHOICES,
+        default='English',
+        blank=True
+    )
+    
+    # Book Cover
+    cover = models.ImageField(
+        upload_to='book_covers/',
+        null=True,
+        blank=True,
+        help_text='Upload a book cover image (JPG, PNG, etc.)'
+    )
+    
+    # Library Management
     total_copies = models.PositiveIntegerField(default=1)
     available_copies = models.PositiveIntegerField(default=1)
-
+    
+    # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
-
+ 
     @property
     def status(self) -> str:
         return "Available" if self.available_copies > 0 else "Borrowed"
-
+ 
     def __str__(self):
         return f"{self.title} - {self.author}".strip()
-
+ 
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Book'
+        verbose_name_plural = 'Books'
 
 class Loan(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="loans")
@@ -33,3 +106,10 @@ class Loan(models.Model):
 
     def __str__(self):
         return f"Loan #{self.id}: {self.user} -> {self.book}"
+    
+    class Meta:
+        ordering = ["-borrow_date"]  # Default ordering by newest first
+        indexes = [
+            models.Index(fields=["user", "return_date"]),    # Speed up filtering
+            models.Index(fields=["user", "-borrow_date"]),   # Speed up ordering
+        ]

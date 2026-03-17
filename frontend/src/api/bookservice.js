@@ -7,7 +7,7 @@ export const getBooks = () =>{
 }
 
 export const getBook = (id) =>{
-    return axios.get(`${API_URL}/books/${id}`);
+    return axios.get(`${API_URL}/books/${id}/`);
 }
 
 export const borrowBook = (id) =>{

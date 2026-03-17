@@ -1,67 +1,68 @@
-import { useState, useEffect } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import axios from "axios";
-import Signup from "./pages/Signup";
+import { BrowserRouter, Routes, Route, useLocation  } from "react-router-dom";
+import { UserProvider } from "./context/UserContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Link,
-  useLocation,
-} from "react-router-dom";
+import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import BookCatalogue from "./pages/BookCatalogue";
 import MyBorrowings from "./pages/MyBorrowings";
-import Navbar from "./components/Navbar";
 import BookDetail from "./pages/BookDetail";
-import AdminPanel from "./pages/AdminPanel";
+import Navbar from "./components/Navbar";
+import AdminLogin from "./pages/AdminLogin";
+import AdminRoute from "./components/AdminRoute";
+import AdminPanel from "./pages/AdminPanel"
+import AdminManageUsers from "./pages/AdminManageUsers";
+import AdminNavbar from "./components/AdminNavbar";
 function App() {
-  // const [books, setBooks] = useState([]);
-
-  // useEffect(()=>{
-  //   axios.get("http://127.0.0.1:8000/api/books/")
-  //   .then(res => {setBooks(res.data)
-  //     console.log(res.data)
-  //   })
-  //   .catch(err => console.log(err));
-  // },[])
-
   return (
-    <>
+    <UserProvider>
       <BrowserRouter>
         <LayoutWrapper>
           <Routes>
-            <Route path="/" element={<Login />}></Route>
-            <Route path="/signup" element={<Signup />}></Route>
-            <Route path="/dashboard" element={<Dashboard />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/book-catalogue" element={<BookCatalogue />} />
+              <Route path="/my-borrowings" element={<MyBorrowings />} />
+              <Route path="/books/:id" element={<BookDetail />} />
             </Route>
-            <Route path="/book-catalogue" element={<BookCatalogue />}>
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route element={<AdminRoute />}>
+                <Route path="/admin-dashboard" element={<AdminPanel/>} />
+                <Route path="/manage-users" element={<AdminManageUsers/>} />
             </Route>
-            <Route path="/my-borrowings" element={<MyBorrowings />}>
-            </Route>
-            <Route path="/books/:id" element={<BookDetail/>}></Route>
-            
-            <Route path="/adminpanel" element={<AdminPanel/>}></Route>
-          </Routes> 
+          </Routes>
         </LayoutWrapper>
       </BrowserRouter>
-    </>
+    </UserProvider>
   );
 }
 
 const LayoutWrapper = ({ children }) => {
-  const location = useLocation();
-  const hideNavbar = ["/", "/signup"].includes(location.pathname);
-
+  const location = useLocation(); // <-- use React Router hook
+  const hideNavbarPages = ["/login", "/signup",'/admin-login','/admin-dashboard','/manage-users'];
+  const adminPages = ['/admin-dashboard','/manage-users']
+  
+  const showNavbar = !hideNavbarPages.includes(location.pathname)
+  const showAdminNavbar = adminPages.includes(location.pathname)
   return (
-    <>
-      {!hideNavbar && <Navbar/>}
+    <> 
+      {showAdminNavbar ? <AdminNavbar/> : showNavbar && <Navbar />}
       {children}
     </>
   );
+
+
+
+  return(
+    <>
+    {}
+    </>
+  )
+
+
 };
 
 export default App;

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +43,9 @@ INSTALLED_APPS = [
     'books',
 ]
 
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -50,12 +53,25 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+SESSION_COOKIE_SECURE = False      # do not require HTTPS for session cookie
+CSRF_COOKIE_SECURE = False         # same for CSRF cookie
 
+SESSION_COOKIE_SAMESITE = 'Lax'    # allow cross-origin requests from React dev server
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+    ]
+
+CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_HTTPONLY = True 
 ROOT_URLCONF = 'library_backend.urls'
+SESSION_COOKIE_DOMAIN = None  # explicitly unset — let browser handle it
+SESSION_COOKIE_AGE = 1209600
 
 TEMPLATES = [
     {
@@ -85,6 +101,8 @@ DATABASES = {
     }
 }
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

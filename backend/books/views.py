@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta
-
+import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -8,9 +8,9 @@ from django.http import JsonResponse, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-
+from .serializer import serialize_loan, serialize_book
 from .models import Book, Loan
-
+from django.db.models import Count
 
 # Create your views here.
 
@@ -72,7 +72,12 @@ def auth_register(request):
         "user": {"id": user.id, "username": user.username, "email": user.email},
     })
 
-
+def _json_body(request):
+    try:
+        return json.loads(request.body)
+    except (ValueError, TypeError):
+        return None
+    
 @csrf_exempt
 def auth_login(request):
     if request.method != "POST":
@@ -104,7 +109,7 @@ def auth_logout(request):
     logout(request)
     return JsonResponse({"ok": True, "message": "Logged out."})
 
-
+@csrf_exempt
 def auth_me(request):
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
@@ -127,28 +132,28 @@ def auth_me(request):
 # ----------------------------
 # Books APIs (public)
 # ----------------------------
-
+ 
 def get_books(request):
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
-
+ 
     q = (request.GET.get("q") or "").strip()
     category = (request.GET.get("category") or "").strip()
     sort = (request.GET.get("sort") or "").strip()  # optional: title/created_at
-
+ 
     qs = Book.objects.all()
-
+ 
     if q:
         qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
-
+ 
     if category:
         qs = qs.filter(category__iexact=category)
-
+ 
     if sort == "title":
         qs = qs.order_by("title")
     else:
         qs = qs.order_by("-created_at", "-id")  # default: newest first
-
+ 
     data = []
     for b in qs:
         data.append({
@@ -158,19 +163,24 @@ def get_books(request):
             "isbn": b.isbn,
             "category": b.category,
             "description": b.description,
+            "publisher": b.publisher,
+            "published_date": b.published_date.isoformat() if b.published_date else None,
+            "pages": b.pages,
+            "language": b.language,
+            "cover": b.cover.url if b.cover else None,
             "total_copies": b.total_copies,
             "available_copies": b.available_copies,
             "status": b.status,
             "created_at": b.created_at.isoformat() if b.created_at else None,
         })
-
+ 
     return JsonResponse(data, safe=False)
-
-
+ 
+ 
 def get_book_detail(request, book_id: int):
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
-
+ 
     b = get_object_or_404(Book, pk=book_id)
     return JsonResponse({
         "id": b.id,
@@ -179,12 +189,56 @@ def get_book_detail(request, book_id: int):
         "isbn": b.isbn,
         "category": b.category,
         "description": b.description,
+        "publisher": b.publisher,
+        "published_date": b.published_date.isoformat() if b.published_date else None,
+        "pages": b.pages,
+        "language": b.language,
+        "cover": b.cover.url if b.cover else None,
         "total_copies": b.total_copies,
         "available_copies": b.available_copies,
         "status": b.status,
         "created_at": b.created_at.isoformat() if b.created_at else None,
     })
 
+def get_featured_books(request):
+    """
+    Get featured books (most borrowed books)
+    GET /api/books/featured/ - Returns top 8 most borrowed books
+    """
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+ 
+    # Get top 8 most borrowed books
+    # ✅ Filter by available_copies > 0 instead of status property
+    featured_books = (
+        Book.objects
+        .annotate(borrow_count=Count('loans'))
+        .filter(borrow_count__gt=0, available_copies__gt=0)  # ✅ Filter by available_copies
+        .order_by('-borrow_count')[:8]
+    )
+ 
+    data = [serialize_book(book) for book in featured_books]
+    return JsonResponse(data, safe=False)
+ 
+ 
+def get_new_books(request):
+    """
+    Get new books (recently added)
+    GET /api/books/new/ - Returns latest 8 added books
+    """
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+ 
+    # Get latest 8 books added to the system
+    # ✅ Filter by available_copies > 0 instead of status property
+    new_books = (
+        Book.objects
+        .filter(available_copies__gt=0)  # ✅ Filter by available_copies
+        .order_by('-created_at')[:8]
+    )
+ 
+    data = [serialize_book(book) for book in new_books]
+    return JsonResponse(data, safe=False)
 
 # ----------------------------
 # Loans APIs (per-user)
@@ -204,7 +258,7 @@ def borrow_book(request, book_id: int):
         return JsonResponse({"ok": False, "message": "Book not available."}, status=400)
 
     today = timezone.localdate()
-    due_date = today + timedelta(days=14)
+    due_date = today + timedelta(days=30)
 
     loan = Loan.objects.create(
         user=request.user,
@@ -230,63 +284,41 @@ def borrow_book(request, book_id: int):
 
 @api_login_required
 def my_loans_current(request):
+    """
+    Get current loans (not yet returned)
+    GET /api/loans/my/current/ - Returns loans with return_date=None
+    """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
-
+ 
     loans = (
         Loan.objects.filter(user=request.user, return_date__isnull=True)
         .select_related("book")
         .order_by("-borrow_date", "-id")
     )
-
-    data = []
-    for l in loans:
-        data.append({
-            "id": l.id,
-            "borrow_date": l.borrow_date.isoformat(),
-            "due_date": l.due_date.isoformat(),
-            "return_date": None,
-            "book": {
-                "id": l.book.id,
-                "title": l.book.title,
-                "author": l.book.author,
-                "isbn": l.book.isbn,
-                "category": l.book.category,
-                "status": l.book.status,
-            },
-        })
+ 
+    data = [serialize_loan(loan) for loan in loans]
     return JsonResponse(data, safe=False)
-
-
+ 
+ 
 @api_login_required
 def my_loans_history(request):
+    """
+    Get loan history (already returned)
+    GET /api/loans/my/history/ - Returns loans with return_date set
+    """
     if request.method != "GET":
         return HttpResponseNotAllowed(["GET"])
-
+ 
     loans = (
         Loan.objects.filter(user=request.user, return_date__isnull=False)
         .select_related("book")
         .order_by("-return_date", "-id")
     )
-
-    data = []
-    for l in loans:
-        data.append({
-            "id": l.id,
-            "borrow_date": l.borrow_date.isoformat(),
-            "due_date": l.due_date.isoformat(),
-            "return_date": l.return_date.isoformat() if l.return_date else None,
-            "book": {
-                "id": l.book.id,
-                "title": l.book.title,
-                "author": l.book.author,
-                "isbn": l.book.isbn,
-                "category": l.book.category,
-                "status": l.book.status,
-            },
-        })
+ 
+    data = [serialize_loan(loan) for loan in loans]
     return JsonResponse(data, safe=False)
-
+ 
 
 @csrf_exempt
 @api_login_required
@@ -321,23 +353,29 @@ def return_loan(request, loan_id: int):
     })
 
 
-# ----------------------------
-# Admin APIs (Admin Panel)
-# ----------------------------
-
+# ============================================================================
+# Admin Book Views
+# ============================================================================
+ 
 @csrf_exempt
 @admin_required
 def admin_books(request):
+    """
+    Admin books list and create
+    GET /api/admin/books/ - List books with filtering
+    POST /api/admin/books/ - Create new book (accepts multipart/form-data for image upload)
+    """
     if request.method == "GET":
         q = (request.GET.get("q") or "").strip()
         category = (request.GET.get("category") or "").strip()
-
+ 
         qs = Book.objects.all().order_by("-id")
+        
         if q:
             qs = qs.filter(title__icontains=q) | qs.filter(author__icontains=q) | qs.filter(isbn__icontains=q)
         if category:
             qs = qs.filter(category__iexact=category)
-
+ 
         data = []
         for b in qs:
             data.append({
@@ -347,75 +385,188 @@ def admin_books(request):
                 "isbn": b.isbn,
                 "category": b.category,
                 "description": b.description,
+                "publisher": b.publisher,
+                "published_date": b.published_date.isoformat() if b.published_date else None,
+                "pages": b.pages,
+                "language": b.language,
+                "cover": b.cover.url if b.cover else None,
                 "total_copies": b.total_copies,
                 "available_copies": b.available_copies,
                 "status": b.status,
                 "created_at": b.created_at.isoformat() if b.created_at else None,
             })
         return JsonResponse(data, safe=False)
-
+ 
     if request.method == "POST":
-        body = _json_body(request)
-        if body is None:
-            return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
-
-        title = (body.get("title") or "").strip()
+        title = (request.POST.get("title") or "").strip()
         if not title:
             return JsonResponse({"ok": False, "message": "title is required."}, status=400)
-
-        author = (body.get("author") or "").strip()
-        isbn = (body.get("isbn") or "").strip()
-        category = (body.get("category") or "").strip()
-        description = (body.get("description") or "").strip()
-
-        total_copies = int(body.get("total_copies") or 1)
-        available_copies = int(body.get("available_copies") or total_copies)
-
-        b = Book.objects.create(
-            title=title,
-            author=author,
-            isbn=isbn,
-            category=category,
-            description=description,
-            total_copies=max(total_copies, 0),
-            available_copies=max(min(available_copies, total_copies), 0),
-        )
-        return JsonResponse({"ok": True, "message": "Book created.", "book_id": b.id})
-
+ 
+        author = (request.POST.get("author") or "").strip()
+        isbn = (request.POST.get("isbn") or "").strip()
+        category = (request.POST.get("category") or "").strip()
+        description = (request.POST.get("description") or "").strip()
+        publisher = (request.POST.get("publisher") or "").strip()
+        published_date = request.POST.get("published_date")
+        pages = request.POST.get("pages")
+        language = (request.POST.get("language") or "English").strip()
+ 
+        total_copies = request.POST.get("total_copies")
+        try:
+            total_copies = int(total_copies) if total_copies else 1
+        except (ValueError, TypeError):
+            total_copies = 1
+ 
+        available_copies = request.POST.get("available_copies")
+        try:
+            available_copies = int(available_copies) if available_copies else total_copies
+        except (ValueError, TypeError):
+            available_copies = total_copies
+ 
+        cover_file = request.FILES.get("cover") if "cover" in request.FILES else None
+ 
+        parsed_date = None
+        if published_date:
+            try:
+                from datetime import datetime
+                parsed_date = datetime.strptime(published_date, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                pass
+ 
+        parsed_pages = None
+        if pages:
+            try:
+                parsed_pages = int(pages)
+            except (ValueError, TypeError):
+                pass
+ 
+        try:
+            b = Book.objects.create(
+                title=title,
+                author=author,
+                isbn=isbn,
+                category=category,
+                description=description,
+                publisher=publisher,
+                published_date=parsed_date,
+                pages=parsed_pages,
+                language=language,
+                cover=cover_file,
+                total_copies=max(total_copies, 0),
+                available_copies=max(min(available_copies, total_copies), 0),
+            )
+            return JsonResponse({
+                "ok": True,
+                "message": "Book created.",
+                "book_id": b.id,
+                "book": {
+                    "id": b.id,
+                    "title": b.title,
+                    "author": b.author,
+                    "isbn": b.isbn,
+                    "category": b.category,
+                    "description": b.description,
+                    "publisher": b.publisher,
+                    "published_date": b.published_date.isoformat() if b.published_date else None,
+                    "pages": b.pages,
+                    "language": b.language,
+                    "cover": b.cover.url if b.cover else None,
+                    "total_copies": b.total_copies,
+                    "available_copies": b.available_copies,
+                    "status": b.status,
+                    "created_at": b.created_at.isoformat() if b.created_at else None,
+                }
+            })
+        except Exception as e:
+            return JsonResponse({
+                "ok": False,
+                "message": f"Error creating book: {str(e)}"
+            }, status=500)
+ 
     return HttpResponseNotAllowed(["GET", "POST"])
-
-
+ 
+ 
 @csrf_exempt
 @admin_required
 def admin_book_detail(request, book_id: int):
+    """
+    Admin book detail, update, and delete
+    PUT /api/admin/books/<int:book_id>/ - Update book
+    DELETE /api/admin/books/<int:book_id>/ - Delete book
+    """
     b = get_object_or_404(Book, pk=book_id)
-
+ 
     if request.method == "PUT":
         body = _json_body(request)
         if body is None:
             return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
-
-        for field in ["title", "author", "isbn", "category", "description"]:
+ 
+        for field in ["title", "author", "isbn", "category", "description", "publisher", "language"]:
             if field in body:
                 setattr(b, field, (body.get(field) or "").strip())
-
+ 
+        if "published_date" in body and body["published_date"]:
+            try:
+                from datetime import datetime
+                b.published_date = datetime.strptime(body["published_date"], "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                pass
+ 
+        if "pages" in body and body["pages"]:
+            try:
+                b.pages = int(body["pages"])
+            except (ValueError, TypeError):
+                pass
+ 
         if "total_copies" in body:
             b.total_copies = max(int(body.get("total_copies") or 0), 0)
+        
         if "available_copies" in body:
             b.available_copies = max(int(body.get("available_copies") or 0), 0)
-
+ 
         if b.available_copies > b.total_copies:
             b.available_copies = b.total_copies
-
+ 
         b.save()
-        return JsonResponse({"ok": True, "message": "Book updated."})
-
+        
+        return JsonResponse({
+            "ok": True,
+            "message": "Book updated.",
+            "book": {
+                "id": b.id,
+                "title": b.title,
+                "author": b.author,
+                "isbn": b.isbn,
+                "category": b.category,
+                "description": b.description,
+                "publisher": b.publisher,
+                "published_date": b.published_date.isoformat() if b.published_date else None,
+                "pages": b.pages,
+                "language": b.language,
+                "cover": b.cover.url if b.cover else None,
+                "total_copies": b.total_copies,
+                "available_copies": b.available_copies,
+                "status": b.status,
+                "created_at": b.created_at.isoformat() if b.created_at else None,
+            }
+        })
+ 
     if request.method == "DELETE":
+        book_title = b.title
+        
+        if b.cover:
+            b.cover.delete()
+        
         b.delete()
-        return JsonResponse({"ok": True, "message": "Book deleted."})
-
+        
+        return JsonResponse({
+            "ok": True,
+            "message": f"Book '{book_title}' deleted."
+        })
+ 
     return HttpResponseNotAllowed(["PUT", "DELETE"])
-
+ 
+ 
 
 @admin_required
 def admin_users(request):
@@ -476,6 +627,91 @@ def admin_create_user(request):
     u.save()
     return JsonResponse({"ok": True, "message": "User created.", "user_id": u.id})
 
+@csrf_exempt
+@admin_required
+def admin_update_user(request, user_id: int):
+    """
+    Update user details
+    PUT /api/admin/users/<int:user_id>/
+    """
+    if request.method != "PUT":
+        return HttpResponseNotAllowed(["PUT"])
+ 
+    u = get_object_or_404(User, pk=user_id)
+ 
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
+ 
+    # Update username
+    if "username" in body and body["username"]:
+        u.username = body["username"].strip()
+ 
+    # Update email
+    if "email" in body and body["email"]:
+        u.email = body["email"].strip()
+ 
+    # Update password (optional)
+    if "password" in body and body["password"]:
+        u.set_password(body["password"])
+ 
+    # Update membership date
+    if "membership" in body and body["membership"]:
+        try:
+            membership_date = datetime.strptime(body["membership"], "%Y-%m-%d").date()
+            u.membership = membership_date
+        except ValueError:
+            return JsonResponse({
+                "ok": False,
+                "message": "Membership date must be in YYYY-MM-DD format."
+            }, status=400)
+ 
+    # Update admin status
+    if "is_admin" in body:
+        u.is_admin = bool(body["is_admin"])
+ 
+    u.save()
+ 
+    return JsonResponse({
+        "ok": True,
+        "message": "User updated successfully.",
+        "user": {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "membership": u.membership.isoformat() if u.membership else None,
+            "is_admin": u.is_admin,
+            "status": "Active" if u.is_active else "Suspended",
+            "books": {
+                "current": 0,
+                "total": 0,
+            }
+        }
+    })
+ 
+ 
+@csrf_exempt
+@admin_required
+def admin_delete_user(request, user_id: int):
+    """
+    Delete a user
+    DELETE /api/admin/users/<int:user_id>/
+    """
+    if request.method != "DELETE":
+        return HttpResponseNotAllowed(["DELETE"])
+ 
+    u = get_object_or_404(User, pk=user_id)
+    username = u.username
+ 
+    u.delete()
+ 
+    return JsonResponse({
+        "ok": True,
+        "message": f"User '{username}' deleted successfully.",
+        "user_id": user_id,
+    })
+ 
 
 @csrf_exempt
 @admin_required
@@ -496,3 +732,90 @@ def admin_user_status(request, user_id: int):
     u.is_active = (status == "active")
     u.save(update_fields=["is_active"])
     return JsonResponse({"ok": True, "message": "User status updated.", "status": "Active" if u.is_active else "Suspended"})
+
+
+@csrf_exempt
+@admin_required
+def admin_user_detail(request, user_id: int):
+    """
+    Admin user detail, update, and delete
+    PUT /api/admin/users/<int:user_id>/ - Update user
+    DELETE /api/admin/users/<int:user_id>/ - Delete user
+    PATCH /api/admin/users/<int:user_id>/ - Update user status
+    """
+    u = get_object_or_404(User, pk=user_id)
+ 
+    if request.method == "PUT":
+        body = _json_body(request)
+        if body is None:
+            return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
+ 
+        # Update username
+        if "username" in body and body["username"]:
+            u.username = body["username"].strip()
+ 
+        # Update email
+        if "email" in body and body["email"]:
+            u.email = body["email"].strip()
+ 
+        # Update password (optional)
+        if "password" in body and body["password"]:
+            u.set_password(body["password"])
+ 
+        # Update admin status
+        if "is_admin" in body:
+            u.is_staff = bool(body["is_admin"])
+ 
+        u.save()
+ 
+        current_loans = Loan.objects.filter(user=u, return_date__isnull=True).count()
+        total_loans = Loan.objects.filter(user=u).count()
+ 
+        return JsonResponse({
+            "ok": True,
+            "message": "User updated.",
+            "user": {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "membership": u.date_joined.date().isoformat(),
+                "is_admin": u.is_staff,
+                "status": "Active" if u.is_active else "Suspended",
+                "books": {
+                    "current": current_loans,
+                    "total": total_loans,
+                }
+            }
+        })
+ 
+    if request.method == "DELETE":
+        username = u.username
+        u.delete()
+ 
+        return JsonResponse({
+            "ok": True,
+            "message": f"User '{username}' deleted."
+        })
+ 
+    if request.method == "PATCH":
+        body = _json_body(request)
+        if body is None:
+            return JsonResponse({"ok": False, "message": "Invalid JSON."}, status=400)
+ 
+        status = (body.get("status") or "").strip().lower()  # active/suspended
+        if status not in ["active", "suspended"]:
+            return JsonResponse(
+                {"ok": False, "message": "status must be 'active' or 'suspended'."},
+                status=400
+            )
+ 
+        u.is_active = (status == "active")
+        u.save(update_fields=["is_active"])
+        
+        return JsonResponse({
+            "ok": True,
+            "message": "User status updated.",
+            "status": "Active" if u.is_active else "Suspended"
+        })
+ 
+    return HttpResponseNotAllowed(["PUT", "DELETE", "PATCH"])

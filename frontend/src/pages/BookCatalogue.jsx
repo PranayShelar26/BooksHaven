@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import book_img from "../assets/book_banner.png";
 import BookCard from "../components/BookCard";
 import BookCatagoryList from "../components/BookCatagoryList";
+import SearchBar from "../components/SearchBar";
 import { Outlet } from "react-router-dom";
 const BookCatalogue = () => {
   return (
@@ -16,13 +17,7 @@ const BookCatalogue = () => {
           </div>
         </div>
         <div className="max-w-8xl mx-auto mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for books, authors, or ISBN..."
-              className="w-full pl-8 pr-8 py-4 rounded-2xl bg-white shadow-lg shadow-gray-100/50 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-700 transition-all"
-            />
-          </div>
+          <SearchBar/>
         </div>
 
         <div>

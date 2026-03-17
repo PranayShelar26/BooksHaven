@@ -36,14 +36,13 @@ const MyBorrowings = () => {
         <div className="flex flex-col gap-5">
           {tab === "current" && (
             <>
-              <BorrowedBookList />
-              <BorrowedBookList />
+              <BorrowedBookList  type="current"/>
             </>
           )}
 
           {tab === "history" && (
             <>
-              <BorrowedBookList />
+              <BorrowedBookList type="history"/>
             </>
           )}
         </div>
