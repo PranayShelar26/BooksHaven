@@ -15,6 +15,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Allow frontend source lib helpers (do not ignore this path)
+!frontend/src/lib/
+!frontend/src/lib/**
 lib64/
 parts/
 sdist/
