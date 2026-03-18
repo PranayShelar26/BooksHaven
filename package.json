@@ -1,6 +1,6 @@
 {
     "name":"bookshaven-root",
-    "private": true，
+    "private": true,
     "scripts": {
         "build": "echo \"no build needed\""
     }
