@@ -212,3 +212,5 @@ __pycache__/
 *.pyc
 .DS_Store
 .env
+backend/media/
+media/
