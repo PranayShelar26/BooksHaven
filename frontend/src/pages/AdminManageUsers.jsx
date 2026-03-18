@@ -1,24 +1,25 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import SearchBar from "../components/SearchBar";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Spinner from "../components/Spinner";
-import UserStatus from "../components/UserStatus";
-import { useUser } from "../context/UserContext";
 import AddUserModal from "../components/AddUserModal";
 import EditUserModal from "../components/EditUserModal";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 import UserSearchBar from "../components/UserSearchBar";
+import { useUser } from "../context/UserContext";
+import api from "../lib/apiClient";
 
 /**
  * AdminManageUsers - Admin dashboard for managing users (CRUD operations)
  */
 const AdminManageUsers = () => {
   const { users, setUsers, loading, search } = useUser();
+
   const [activeStatus, setActiveStatus] = useState("All");
   const [filteredUsers, setFilteredUsers] = useState([]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationData, setConfirmationData] = useState({
     title: "",
@@ -26,26 +27,29 @@ const AdminManageUsers = () => {
     newUser: null,
     isDangerous: false,
   });
+
   const [deleteUserId, setDeleteUserId] = useState(null);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await api.get("/admin/users/");
+      setUsers(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      alert("Error fetching users. Please try again.");
+      setUsers([]);
+    }
+  }, [setUsers]);
 
   // Fetch users on mount
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  const fetchUsers = () => {
-    axios
-      .get("http://localhost:8000/api/admin/users/", { withCredentials: true })
-      .then((res) => {
-        setUsers(res.data);
-      })
-      .catch((err) => {
-        console.error("Error fetching users:", err);
-        alert(err);
-      });
-  };
-
-  const statuses = ["All", ...new Set(users.map((user) => user.status))];
+  const statuses = useMemo(() => {
+    const statusSet = new Set((users || []).map((u) => u.status).filter(Boolean));
+    return ["All", ...Array.from(statusSet)];
+  }, [users]);
 
   // Filter users by status and search
   useEffect(() => {
@@ -54,40 +58,42 @@ const AdminManageUsers = () => {
         ? users
         : users.filter((user) => user.status === activeStatus);
 
-    filtered = filtered.filter(
-      (user) =>
-        user.username.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
-        user.membership.toLowerCase().includes(search.toLowerCase())
-    );
+    const q = (search || "").toLowerCase();
+
+    filtered = filtered.filter((user) => {
+      const username = (user.username || "").toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      const membership = (user.membership || "").toLowerCase();
+      return username.includes(q) || email.includes(q) || membership.includes(q);
+    });
 
     setFilteredUsers(filtered);
   }, [activeStatus, users, search]);
 
-  const handleAddUser = (formData) => {
-    axios
-      .post("http://localhost:8000/api/admin/users/create/", formData, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        if (res.data.ok) {
-          setConfirmationData({
-            title: "User Created Successfully ✓",
-            description: `User "${formData.username}" has been added to the system.`,
-            newUser: formData,
-            isDangerous: false,
-          });
-          setShowConfirmation(true);
-          setIsModalOpen(false);
+  const handleAddUser = async (formData) => {
+    try {
+      const res = await api.post("/admin/users/create/", formData);
 
-          setTimeout(() => {
-            fetchUsers();
-          }, 500);
-        } else {
-          alert("Error: " + res.data.message);
-        }
-      })
-      .catch((err) => alert("Error adding user: " + err));
+      if (res.data?.ok) {
+        setConfirmationData({
+          title: "User Created Successfully ✓",
+          description: `User "${formData.username}" has been added to the system.`,
+          newUser: formData,
+          isDangerous: false,
+        });
+        setShowConfirmation(true);
+        setIsModalOpen(false);
+
+        setTimeout(() => {
+          fetchUsers();
+        }, 500);
+      } else {
+        alert("Error: " + (res.data?.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error adding user:", err);
+      alert("Error adding user. Please try again.");
+    }
   };
 
   const handleEditClick = (user) => {
@@ -95,33 +101,32 @@ const AdminManageUsers = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleEditUser = (formData) => {
-    axios
-      .put(`http://localhost:8000/api/admin/users/${selectedUser.id}/`, formData, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        if (res.data.ok) {
-          setConfirmationData({
-            title: "User Updated Successfully ✓",
-            description: `User "${formData.username}" has been updated.`,
-            newUser: formData,
-            isDangerous: false,
-          });
-          setShowConfirmation(true);
-          setIsEditModalOpen(false);
+  const handleEditUser = async (formData) => {
+    if (!selectedUser?.id) return;
 
-          setTimeout(() => {
-            fetchUsers();
-          }, 500);
-        } else {
-          alert("Error: " + res.data.message);
-        }
-      })
-      .catch((err) => {
-        console.error("Error updating user:", err);
-        alert("Error updating user: " + err);
-      });
+    try {
+      const res = await api.put(`/admin/users/${selectedUser.id}/`, formData);
+
+      if (res.data?.ok) {
+        setConfirmationData({
+          title: "User Updated Successfully ✓",
+          description: `User "${formData.username}" has been updated.`,
+          newUser: formData,
+          isDangerous: false,
+        });
+        setShowConfirmation(true);
+        setIsEditModalOpen(false);
+
+        setTimeout(() => {
+          fetchUsers();
+        }, 500);
+      } else {
+        alert("Error: " + (res.data?.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error updating user:", err);
+      alert("Error updating user. Please try again.");
+    }
   };
 
   const handleDeleteClick = (user) => {
@@ -135,27 +140,25 @@ const AdminManageUsers = () => {
     setShowConfirmation(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (deleteUserId) {
-      axios
-        .delete(`http://localhost:8000/api/admin/users/${deleteUserId}/`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          if (res.data.ok) {
-            setShowConfirmation(false);
-            setDeleteUserId(null);
-            setTimeout(() => {
-              fetchUsers();
-            }, 300);
-          } else {
-            alert("Error: " + res.data.message);
-          }
-        })
-        .catch((err) => {
-          console.error("Error deleting user:", err);
-          alert("Error deleting user: " + err);
-        });
+  const handleConfirmDelete = async () => {
+    if (!deleteUserId) return;
+
+    try {
+      const res = await api.delete(`/admin/users/${deleteUserId}/`);
+
+      if (res.data?.ok) {
+        setShowConfirmation(false);
+        setDeleteUserId(null);
+
+        setTimeout(() => {
+          fetchUsers();
+        }, 300);
+      } else {
+        alert("Error: " + (res.data?.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      alert("Error deleting user. Please try again.");
     }
   };
 
@@ -206,18 +209,21 @@ const AdminManageUsers = () => {
               <UserSearchBar />
             </div>
             <button
+              type="button"
               onClick={() => setIsModalOpen(true)}
               className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition-all whitespace-nowrap text-sm sm:text-base w-full sm:w-auto"
+              aria-label="Add new user"
             >
               + Add New User
             </button>
           </div>
 
           <div className="overflow-x-auto">
-            <div className="flex gap-2 pb-2">
+            <div className="flex gap-2 pb-2" role="tablist" aria-label="Filter users by status">
               {statuses.map((status) => (
                 <button
                   key={status}
+                  type="button"
                   onClick={() => setActiveStatus(status)}
                   className={`py-2 px-3 sm:px-5 rounded-xl font-semibold cursor-pointer transition-all whitespace-nowrap text-xs sm:text-sm
                     ${
@@ -225,6 +231,7 @@ const AdminManageUsers = () => {
                         ? "bg-amber-500 text-white"
                         : "bg-gray-200 hover:bg-amber-400 hover:text-white"
                     }`}
+                  aria-pressed={activeStatus === status}
                 >
                   {status}
                 </button>
@@ -258,13 +265,12 @@ const AdminManageUsers = () => {
                     <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{user.email}</td>
                     <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">{user.membership}</td>
                     <td className="px-4 lg:px-6 py-3 text-gray-600 text-sm">
-                      <div>Current: {user.books.current}</div>
-                      <div>Total: {user.books.total}</div>
+                      <div>Current: {user.books?.current ?? 0}</div>
+                      <div>Total: {user.books?.total ?? 0}</div>
                     </td>
                     <td className="px-4 lg:px-6 py-3">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold
-                        ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           user.status === "Active"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
@@ -276,14 +282,18 @@ const AdminManageUsers = () => {
                     <td className="px-4 lg:px-6 py-3">
                       <div className="flex gap-2 flex-wrap">
                         <button
+                          type="button"
                           onClick={() => handleEditClick(user)}
                           className="px-3 py-1 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                          aria-label={`Edit user ${user.username}`}
                         >
                           Edit
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDeleteClick(user)}
                           className="px-3 py-1 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                          aria-label={`Delete user ${user.username}`}
                         >
                           Delete
                         </button>
@@ -310,12 +320,11 @@ const AdminManageUsers = () => {
                     <p className="text-xs text-gray-500 mt-1 truncate">{user.email}</p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap
-                      ${
-                        user.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                    className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                      user.status === "Active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                   >
                     {user.status}
                   </span>
@@ -329,21 +338,25 @@ const AdminManageUsers = () => {
                   <div>
                     <p className="text-gray-600">Books</p>
                     <p className="font-medium">
-                      {user.books.current}/{user.books.total}
+                      {(user.books?.current ?? 0)}/{(user.books?.total ?? 0)}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <button
+                    type="button"
                     onClick={() => handleEditClick(user)}
                     className="flex-1 px-3 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all"
+                    aria-label={`Edit user ${user.username}`}
                   >
                     Edit
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDeleteClick(user)}
                     className="flex-1 px-3 py-2 text-xs font-semibold border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                    aria-label={`Delete user ${user.username}`}
                   >
                     Delete
                   </button>

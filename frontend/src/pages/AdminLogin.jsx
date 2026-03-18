@@ -2,9 +2,9 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../assets/BooksHavenLogo.png";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { useUser } from "../context/UserContext";
 import ConfirmationDialog from "../components/ConfirmationDialog";
+import api from "../lib/apiClient";
 
 /**
  * AdminLogin - Dedicated login page for admin users
@@ -18,41 +18,44 @@ const AdminLogin = () => {
     clearErrors,
     reset,
   } = useForm();
+
   const { setUser } = useUser();
   const navigate = useNavigate();
+
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const [loginData, setLoginData] = React.useState(null);
 
   const onSubmit = async (data) => {
+    clearErrors("apiError");
+
     try {
-      const res = await axios.post(
-        "http://localhost:8000/api/auth/login/",
-        {
-          username: data.username,
-          password: data.password,
-        },
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "application/json" },
-        }
+      const res = await api.post(
+        "/auth/login/",
+        { username: data.username, password: data.password },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (res.data.ok) {
+      if (res.data?.ok) {
         // Verify admin role
-        if (!res.data.user.is_admin) {
-          await axios.post("http://localhost:8000/api/auth/logout/");
+        if (!res.data.user?.is_admin) {
+          await api.post("/auth/logout/");
           setError("apiError", {
             type: "manual",
             message: "Admin access only.",
           });
           return;
         }
-        
+
         // Admin verified - proceed with login
         setUser(res.data.user);
         setLoginData({ username: data.username });
         setShowConfirmation(true);
         reset();
+      } else {
+        setError("apiError", {
+          type: "manual",
+          message: res.data?.message || "Invalid credentials.",
+        });
       }
     } catch (err) {
       setError("apiError", {
@@ -96,16 +99,14 @@ const AdminLogin = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-5">
             {/* Username Field */}
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
+              <label htmlFor="username" className="block text-sm/6 font-medium text-gray-900">
                 Username
               </label>
               <div className="mt-2">
                 <input
                   id="username"
                   type="text"
+                  autoComplete="username"
                   {...register("username", {
                     required: "Enter your username",
                     onChange: () => clearErrors("apiError"),
@@ -113,7 +114,7 @@ const AdminLogin = () => {
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 />
                 {errors.username && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-sm mt-1" role="alert">
                     {errors.username.message}
                   </p>
                 )}
@@ -123,10 +124,7 @@ const AdminLogin = () => {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm/6 font-medium text-gray-900"
-                >
+                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
                   Password
                 </label>
               </div>
@@ -134,6 +132,7 @@ const AdminLogin = () => {
                 <input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   {...register("password", {
                     required: "Enter your password",
                     onChange: () => clearErrors("apiError"),
@@ -141,7 +140,7 @@ const AdminLogin = () => {
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 />
                 {errors.password && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-sm mt-1" role="alert">
                     {errors.password.message}
                   </p>
                 )}
@@ -149,20 +148,18 @@ const AdminLogin = () => {
 
               {/* API Error */}
               {errors.apiError && (
-                <p className="text-red-600 mt-1 text-sm">
+                <p className="text-red-600 mt-1 text-sm" role="alert" aria-live="polite">
                   {errors.apiError.message}
                 </p>
               )}
 
               <div className="flex mt-2 flex-row justify-between">
-                <div>
-                  <input type="checkbox" /> Remember me
+                <div className="flex items-center gap-2">
+                  <input id="rememberMe" type="checkbox" />
+                  <label htmlFor="rememberMe">Remember me</label>
                 </div>
                 <div className="text-sm">
-                  <a
-                    href="#"
-                    className="font-semibold text-black hover:underline"
-                  >
+                  <a href="#" className="font-semibold text-black hover:underline">
                     Forgot password?
                   </a>
                 </div>

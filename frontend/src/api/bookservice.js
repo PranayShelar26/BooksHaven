@@ -1,24 +1,21 @@
-import axios from "axios";
+import api from "../lib/apiClient";
 
-const API_URL = "/api"
+export const getBooks = () => {
+  return api.get("/books/");
+};
 
-export const getBooks = () =>{
-    return axios.get(`${API_URL}/books/`);
-}
+export const getBook = (id) => {
+  return api.get(`/books/${id}/`);
+};
 
-export const getBook = (id) =>{
-    return axios.get(`${API_URL}/books/${id}/`);
-}
+export const borrowBook = (id) => {
+  return api.post(`/books/${id}/borrow/`, {});
+};
 
-export const borrowBook = (id) =>{
-    return axios.get(`${API_URL}/books/${id}/borrow/`);
-}
+export const getMyLoans = () => {
+  return api.get("/loans/my/");
+};
 
-export const getMyLoans = () =>{
-    return axios.get(`${API_URL}/loans/my/`);
-}
-
-export const ReturnLoan = (id) =>{
-    return axios.get(`${API_URL}/loans/${id}/return/`);
-}
-
+export const ReturnLoan = (id) => {
+  return api.post(`/loans/${id}/return/`, {});
+};

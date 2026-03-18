@@ -2,9 +2,9 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../assets/BooksHavenLogo.png";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { useUser } from "../context/UserContext";
 import ConfirmationDialog from "../components/ConfirmationDialog";
+import api from "../lib/apiClient";
 
 const Login = () => {
   const {
@@ -15,8 +15,10 @@ const Login = () => {
     clearErrors,
     reset,
   } = useForm();
+
   const { setUser } = useUser();
   const navigate = useNavigate();
+
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const [loginData, setLoginData] = React.useState(null);
 
@@ -24,20 +26,22 @@ const Login = () => {
     clearErrors("apiError");
 
     try {
-      const res = await axios.post(
-        "http://localhost:8000/api/auth/login/",
+      const res = await api.post(
+        "/auth/login/",
         { username: data.username, password: data.password },
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "application/json" },
-        }
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (res.data.ok) {
+      if (res.data?.ok) {
         setUser(res.data.user);
         setLoginData({ username: data.username });
         setShowConfirmation(true);
         reset();
+      } else {
+        setError("apiError", {
+          type: "manual",
+          message: res.data?.message || "Login failed",
+        });
       }
     } catch (err) {
       setError("apiError", {
@@ -81,16 +85,14 @@ const Login = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-5">
             {/* Username */}
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
+              <label htmlFor="username" className="block text-sm/6 font-medium text-gray-900">
                 Username
               </label>
               <div className="mt-2">
                 <input
                   id="username"
                   type="text"
+                  autoComplete="username"
                   {...register("username", {
                     required: "Enter your username",
                     onChange: () => clearErrors("apiError"),
@@ -98,7 +100,7 @@ const Login = () => {
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 />
                 {errors.username && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-sm mt-1" role="alert">
                     {errors.username.message}
                   </p>
                 )}
@@ -108,17 +110,16 @@ const Login = () => {
             {/* Password */}
             <div>
               <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm/6 font-medium text-gray-900"
-                >
+                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
                   Password
                 </label>
               </div>
+
               <div className="mt-2">
                 <input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   {...register("password", {
                     required: "Enter your password",
                     onChange: () => clearErrors("apiError"),
@@ -126,25 +127,27 @@ const Login = () => {
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 />
                 {errors.password && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-sm mt-1" role="alert">
                     {errors.password.message}
                   </p>
                 )}
               </div>
+
               {/* API Error */}
               {errors.apiError && (
-                <p className="text-red-600 mt-1 text-sm">{errors.apiError.message}</p>
+                <p className="text-red-600 mt-1 text-sm" role="alert" aria-live="polite">
+                  {errors.apiError.message}
+                </p>
               )}
 
               <div className="flex mt-2 flex-row justify-between">
-                <div>
-                  <input type="checkbox" /> Remember me
+                <div className="flex items-center gap-2">
+                  <input id="rememberMe" type="checkbox" />
+                  <label htmlFor="rememberMe">Remember me</label>
                 </div>
+
                 <div className="text-sm">
-                  <a
-                    href="#"
-                    className="font-semibold text-black hover:underline"
-                  >
+                  <a href="#" className="font-semibold text-black hover:underline">
                     Forgot password?
                   </a>
                 </div>
@@ -169,11 +172,13 @@ const Login = () => {
               Sign Up
             </Link>
           </p>
-          <p className="mt-1     text-center text-sm/6">
-              Login to Admin Panel ? {" "}
-              <Link to='/admin-login' className="font-semibold hover:underline" >Admin Login</Link>
-          </p>
 
+          <p className="mt-1 text-center text-sm/6">
+            Login to Admin Panel ?{" "}
+            <Link to="/admin-login" className="font-semibold hover:underline">
+              Admin Login
+            </Link>
+          </p>
         </div>
       </div>
     </>

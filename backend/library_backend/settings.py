@@ -4,6 +4,7 @@ Django settings for library_backend project.
 - Session-based auth (Django login()) for React/Vite frontend
 - CORS + CSRF trusted origins configured for cross-origin cookies
 - Environment-variable friendly (safe for deployment)
+- Replit deployment: Django serves React build (same-origin)
 """
 
 from pathlib import Path
@@ -25,7 +26,10 @@ DEBUG = os.getenv("DEBUG", "1") == "1"
 
 ALLOWED_HOSTS = [
     h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    for h in os.getenv(
+        "ALLOWED_HOSTS",
+        "127.0.0.1,localhost,.replit.app,.repl.co"
+    ).split(",")
     if h.strip()
 ]
 
@@ -47,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,10 +62,14 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "library_backend.urls"
 
+# React build will be copied to backend/frontend_build/
+FRONTEND_BUILD_DIR = os.path.join(BASE_DIR, "frontend_build")
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # So Django can serve React's index.html
+        "DIRS": [FRONTEND_BUILD_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -107,6 +116,12 @@ USE_TZ = True
 # ----------------
 STATIC_URL = "static/"
 
+# Required for collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# WhiteNoise storage
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -120,8 +135,8 @@ SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
 CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "0") == "1"
 
 # SameSite handling
-# - local dev: Lax is fine (same-site localhost)
-# - cross-site prod (frontend and backend on different domains): use "None" + secure cookies
+# - same-origin deploy (Replit single domain): "Lax" works
+# - cross-site deploy (frontend and backend on different domains): use "None" + secure cookies
 SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
 CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
 
@@ -129,9 +144,11 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = None  # let browser manage it
 SESSION_COOKIE_AGE = 1209600  # 14 days
 
-# Allow frontend to send cookies
+# Allow frontend to send cookies (safe even for same-origin)
 CORS_ALLOW_CREDENTIALS = True
 
+# In same-origin deploy, CORS is not needed, but keeping it doesn't break anything.
+# Provide safe defaults for local dev; override via env in production if you split domains.
 CORS_ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv(
@@ -141,6 +158,7 @@ CORS_ALLOWED_ORIGINS = [
     if o.strip()
 ]
 
+# For local dev with Vite; for same-origin production, it’s generally not needed.
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
     for o in os.getenv(
