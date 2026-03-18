@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import api from "../lib/apiClient";
 
 const UserContext = createContext();
 
@@ -10,9 +10,8 @@ export const UserProvider = ({ children }) => {
   const [search, setSearch] = useState("");
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/auth/me/", { withCredentials: true })
+      api.get("/auth/me/")
       .then((res) => {
-        // 👈 add this line
         if (res.data.authenticated) setUser(res.data.user);
       })
       .catch((err) => {
@@ -20,7 +19,7 @@ export const UserProvider = ({ children }) => {
           "Session check failed:",
           err.response?.status,
           err.response?.data,
-        ); // 👈 add this line
+        );
         setUser(null);
       })
       .finally(() => setLoading(false));

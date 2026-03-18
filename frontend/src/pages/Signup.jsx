@@ -1,10 +1,9 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../assets/BooksHavenLogo.png";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import ConfirmationDialog from "../components/ConfirmationDialog";
+import api from "../lib/apiClient";
 
 /**
  * Signup - User registration page with form validation
@@ -23,6 +22,7 @@ const Signup = () => {
   const password = watch("password");
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
+
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [signupData, setSignupData] = useState(null);
 
@@ -36,13 +36,14 @@ const Signup = () => {
       return;
     }
 
-    try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/api/auth/register/",
-        data
-      );
+    clearErrors("apiError");
 
-      if (res.data.ok) {
+    try {
+      const res = await api.post("/auth/register/", data, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.data?.ok) {
         setSignupData({
           username: data.username,
           email: data.email,
@@ -50,6 +51,11 @@ const Signup = () => {
         setShowConfirmation(true);
         reset();
         setConfirmPassword("");
+      } else {
+        setError("apiError", {
+          type: "manual",
+          message: res.data?.message || "Signup failed. Please try again.",
+        });
       }
     } catch (err) {
       setError("apiError", {
@@ -85,21 +91,18 @@ const Signup = () => {
       <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
         {/* Logo & Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <div className="w-20  mx-auto flex shadow-xl rounded-3xl overflow-hidden justify-center">
-            <img
-              alt="BooksHaven"
-              src={Logo}
-              className="mx-auto h-full w-full  "
-            />
+          <div className="w-20 mx-auto flex shadow-xl rounded-3xl overflow-hidden justify-center">
+            <img alt="BooksHaven" src={Logo} className="mx-auto h-full w-full" />
           </div>
-          <h1 className="mt-6 text-center text-2xl/9 font-bold ">Books Haven</h1>
+          <h1 className="mt-6 text-center text-2xl/9 font-bold">Books Haven</h1>
           <p className="text-center">Library Managment System</p>
         </div>
 
         {/* Signup Form */}
-        <div className="mt-6 p-5 shadow-sm shadow-amber-600 bg-linear-to-r from-amber-500 to-orange-600 rounded-3xl sm:mx-auto  sm:w-full sm:max-w-sm">
+        <div className="mt-6 p-5 shadow-sm shadow-amber-600 bg-linear-to-r from-amber-500 to-orange-600 rounded-3xl sm:mx-auto sm:w-full sm:max-w-sm">
           <h2 className="text-2xl font-medium">Create Account!</h2>
           <div className="text-l mt-1">Register to start borrowing books</div>
+
           <form
             onSubmit={handleSubmit(onSubmit)}
             method="POST"
@@ -107,17 +110,14 @@ const Signup = () => {
           >
             {/* API Error */}
             {errors.apiError && (
-              <p className="text-red-600 text-sm mt-1">
+              <p className="text-red-600 text-sm mt-1" role="alert" aria-live="polite">
                 {errors.apiError.message}
               </p>
             )}
 
-            {/* Full Name Field */}
+            {/* Full Name Field (Note: you register this as username in your original code) */}
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
+              <label htmlFor="name" className="block text-sm/6 font-medium text-gray-900">
                 Full Name
               </label>
               <div className="mt-2">
@@ -127,7 +127,7 @@ const Signup = () => {
                   type="text"
                   required
                   autoComplete="name"
-                  className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600    sm:text-sm/6 ${
+                  className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
                     errors.username
                       ? "outline-red-600 focus:outline-red-600"
                       : "outline-gray-300 focus:outline-indigo-600"
@@ -135,8 +135,7 @@ const Signup = () => {
                   {...register("username", {
                     required: true,
                     pattern: {
-                      value:
-                        /^(?=.{3,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/,
+                      value: /^(?=.{3,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$/,
                       message: "Username format invalid",
                     },
                     minLength: {
@@ -146,7 +145,7 @@ const Signup = () => {
                   })}
                 />
                 {errors.username && (
-                  <p className="text-white text-sm mt-1">
+                  <p className="text-white text-sm mt-1" role="alert">
                     {errors.username.message}
                   </p>
                 )}
@@ -155,10 +154,7 @@ const Signup = () => {
 
             {/* Email Field */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm/6 font-medium text-gray-900"
-              >
+              <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
                 Email address
               </label>
               <div className="mt-2">
@@ -176,14 +172,13 @@ const Signup = () => {
                   {...register("email", {
                     required: true,
                     pattern: {
-                      value:
-                        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                       message: "Invalid email address",
                     },
                   })}
                 />
                 {errors.email && (
-                  <p className="text-white text-sm mt-1">
+                  <p className="text-white text-sm mt-1" role="alert">
                     {errors.email.message}
                   </p>
                 )}
@@ -193,10 +188,7 @@ const Signup = () => {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm/6 font-medium text-gray-900"
-                >
+                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
                   Password
                 </label>
               </div>
@@ -206,7 +198,7 @@ const Signup = () => {
                   name="password"
                   type="password"
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
                     errors.password
                       ? "outline-red-600 focus:outline-red-600"
@@ -223,7 +215,7 @@ const Signup = () => {
                   })}
                 />
                 {errors.password && (
-                  <p className="text-white text-sm mt-1">
+                  <p className="text-white text-sm mt-1" role="alert">
                     {errors.password.message}
                   </p>
                 )}
@@ -233,10 +225,7 @@ const Signup = () => {
             {/* Confirm Password Field */}
             <div>
               <div className="flex items-center justify-between">
-                <label
-                  htmlFor="Confirmpassword"
-                  className="block text-sm/6 font-medium text-gray-900"
-                >
+                <label htmlFor="Confirmpassword" className="block text-sm/6 font-medium text-gray-900">
                   Confirm Password
                 </label>
               </div>
@@ -246,17 +235,15 @@ const Signup = () => {
                   name="Confirmpassword"
                   type="password"
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
-                    errors.confirmPassword
-                      ? "outline-red-600 focus:outline-red-600"
-                      : ""
+                    errors.confirmPassword ? "outline-red-600 focus:outline-red-600" : ""
                   }`}
                   value={confirmPassword}
                   onChange={handleConfirmChange}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-red-600 text-sm mt-1" role="alert">
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -267,7 +254,7 @@ const Signup = () => {
             <div>
               <button
                 type="submit"
-                className="flex w-full mt-5 justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold shadow-xs hover:bg-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2 "
+                className="flex w-full mt-5 justify-center rounded-md bg-white px-3 py-1.5 text-sm/6 font-semibold shadow-xs hover:bg-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 Sign up
               </button>
@@ -277,7 +264,7 @@ const Signup = () => {
           {/* Login Link */}
           <p className="mt-5 text-center text-sm/6">
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold hover:underline ">
+            <Link to="/login" className="font-semibold hover:underline">
               Login
             </Link>
           </p>

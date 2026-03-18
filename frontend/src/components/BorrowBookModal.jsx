@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../lib/apiClient";
 import ConfirmationDialog from "./ConfirmationDialog";
+import { useBooks } from "../context/BookContext";
 
-const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
+const BorrowBookModal = ({
+  isOpen,
+  onClose,
+  book,
+  onBorrowSuccess,
+  onUpdateBook, 
+}) => {
+  const { updateBookCopies, refreshBooks } = useBooks();
+
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [borrowData, setBorrowData] = useState(null);
@@ -15,15 +24,13 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
     if (isOpen && book?.id) {
       checkUserBorrowings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, book?.id]);
 
   const checkUserBorrowings = async () => {
     setCheckingBorrowings(true);
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/loans/my/",
-        { withCredentials: true }
-      );
+      const response = await api.get("/loans/my/");
       setUserBorrowings(response.data || []);
       console.log("User borrowings:", response.data);
     } catch (err) {
@@ -45,7 +52,9 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
     }
 
     if (userHasBook) {
-      setError("You have already borrowed this book. Please return it before borrowing again.");
+      setError(
+        "You have already borrowed this book. Please return it before borrowing again."
+      );
       return;
     }
 
@@ -53,15 +62,28 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
     setError("");
 
     try {
-      const response = await axios.post(
-        `http://localhost:8000/api/books/${book.id}/borrow/`,
-        {},
-        { withCredentials: true }
-      );
-
+      const response = await api.post(`/books/${book.id}/borrow/`, {});
       console.log("Borrow response:", response.data);
 
       if (response.data && response.data.ok) {
+        // updata
+        if (typeof response.data.available_copies === "number") {
+          updateBookCopies(book.id, response.data.available_copies);
+        }
+
+        if (
+          typeof onUpdateBook === "function" &&
+          typeof response.data.available_copies === "number"
+        ) {
+          onUpdateBook({ available_copies: response.data.available_copies });
+        }
+
+        await refreshBooks();
+
+        if (typeof onBorrowSuccess === "function") {
+          onBorrowSuccess();
+        }
+
         const dueDate = new Date(response.data.due_date);
         setBorrowData({
           bookTitle: book.title,
@@ -73,6 +95,7 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
           }),
           loanId: response.data.loan_id,
         });
+
         setShowConfirmation(true);
         setLoading(false);
       } else {
@@ -92,9 +115,6 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
-    if (onBorrowSuccess) {
-      onBorrowSuccess();
-    }
     onClose();
   };
 
@@ -113,21 +133,17 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
 
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-4">
         {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/50"
-          onClick={onClose}
-        ></div>
+        <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
 
         {/* Modal */}
         <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-lg z-50">
           <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Borrow Book
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">Borrow Book</h3>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-red-500 text-2xl font-bold transition-all"
+                aria-label="Close dialog"
               >
                 ✕
               </button>
@@ -180,7 +196,9 @@ const BorrowBookModal = ({ isOpen, onClose, book, onBorrowSuccess }) => {
                 {userHasBook && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <p className="text-sm text-yellow-800">
-                      <span className="font-semibold">⚠️ Note:</span> You already have this book borrowed. Please return it first before borrowing again.
+                      <span className="font-semibold"> Note:</span> You already
+                      have this book borrowed. Please return it first before
+                      borrowing again.
                     </p>
                   </div>
                 )}
