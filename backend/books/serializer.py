@@ -1,6 +1,7 @@
 def serialize_loan(loan):
     """
-    Serialize a Loan object to a dictionary with full book details including cover.
+    Serialize a Loan object to a dictionary with full book details.
+    Uses the new cover_url property instead of .url
     """
     return {
         "id": loan.id,
@@ -14,15 +15,19 @@ def serialize_loan(loan):
             "isbn": loan.book.isbn,
             "category": loan.book.category,
             "status": loan.book.status,
-            "cover": loan.book.cover.url if loan.book.cover else None,  
+            "cover": loan.book.cover_url,  # ← Changed from .url
             "publisher": loan.book.publisher,
             "pages": loan.book.pages,
             "language": loan.book.language,
         },
     }
 
+
 def serialize_book(book):
-    """Serialize Book model to dictionary"""
+    """
+    Serialize Book model to dictionary.
+    Uses the new cover_url property instead of .url
+    """
     return {
         "id": book.id,
         "title": book.title,
@@ -34,7 +39,7 @@ def serialize_book(book):
         "published_date": book.published_date.isoformat() if book.published_date else None,
         "pages": book.pages,
         "language": book.language,
-        "cover": book.cover.url if book.cover else None,
+        "cover": book.cover_url,  # ← Changed from .url
         "total_copies": book.total_copies,
         "available_copies": book.available_copies,
         "status": book.status,

@@ -74,12 +74,43 @@ class Book(models.Model):
     cover = CloudinaryField('image', folder='book_covers/', null=True, blank=True)
     
     @property
+    def cover_url(self):
+        """
+        Generate proper HTTPS Cloudinary URL from public_id.
+        This replaces the buggy .url property.
+        """
+        if not self.cover:
+            return None
+        
+        # Get the public_id (e.g., "book_covers/my-book-title")
+        public_id = self.cover.public_id if hasattr(self.cover, 'public_id') else str(self.cover)
+        
+        # Use cloudinary_url to generate proper HTTPS URL
+        url, _ = cloudinary.utils.cloudinary_url(
+            public_id,
+            secure=True,  # Forces HTTPS
+            type='upload'
+        )
+        return url
+ 
+    @property
     def cover_thumbnail(self):
-        if self.cover:
-            return cloudinary.CloudinaryResource(
-                self.cover.public_id
-            ).build_url(width=200, height=300, crop='fill', quality='auto')
-        return None
+        """Generate thumbnail URL with transformations"""
+        if not self.cover:
+            return None
+        
+        public_id = self.cover.public_id if hasattr(self.cover, 'public_id') else str(self.cover)
+        
+        url, _ = cloudinary.utils.cloudinary_url(
+            public_id,
+            secure=True,
+            type='upload',
+            width=200,
+            height=300,
+            crop='fill',
+            quality='auto'
+        )
+        return url
 
     # Inventory tracking
     total_copies = models.PositiveIntegerField(default=1)
