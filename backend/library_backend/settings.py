@@ -155,6 +155,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 # In same-origin deploy, CORS is not needed, but keeping it doesn't break anything.
 # Provide safe defaults for local dev; override via env in production if you split domains.
-CORS_ALLOW_ALL_ORIGIN = True
+CORS_ALLOW_ALL_ORIGINS = True
 # avoid redirect-to-profile after login
 LOGIN_REDIRECT_URL = "/admin/"
