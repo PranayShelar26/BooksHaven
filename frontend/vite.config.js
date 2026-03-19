@@ -12,9 +12,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
-    outDir: 'build',
-    sourcemap: true,   // ← Change to true
-    minify: false,     // ← Change to false
+    outDir: 'dist',  // ← Change from 'build' to 'dist'
+    sourcemap: true,
+    minify: false,
     rollupOptions: {
       output: {
         entryFileNames: 'js/[name].[hash].js',
