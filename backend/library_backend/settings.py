@@ -28,7 +28,7 @@ ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv(
         "ALLOWED_HOSTS",
-        "https://bookshaven.onrender.com/"
+        "127.0.0.1,localhost,https://bookshaven.onrender.com"
     ).split(",")
     if h.strip()
 ]
