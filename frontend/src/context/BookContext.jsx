@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import api from "../lib/apiClient";
 
 /**
@@ -18,9 +24,11 @@ export const BookProvider = ({ children }) => {
   const refreshBooks = useCallback(async () => {
     try {
       const res = await api.get("/books/");
-      setBooks(res.data);
+      // Make sure it's an array
+      setBooks(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("refreshBooks error:", err);
+      setBooks([]); // ← Set to empty array on error
     }
   }, []);
 
@@ -30,8 +38,8 @@ export const BookProvider = ({ children }) => {
 
     setBooks((prev) =>
       prev.map((b) =>
-        b.id === bookId ? { ...b, available_copies: newAvailableCopies } : b
-      )
+        b.id === bookId ? { ...b, available_copies: newAvailableCopies } : b,
+      ),
     );
   }, []);
 
