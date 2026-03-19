@@ -213,3 +213,4 @@ backend/media/
 media/
 frontend/.env*
 .env*
+!frontend/.env.example
