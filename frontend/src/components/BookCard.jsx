@@ -27,6 +27,7 @@ const BookCard = () => {
               alt={book.title ? `Cover of ${book.title}` : "Book cover"}
               loading="lazy"
               decoding="async"
+              onError={(e) => { e.currentTarget.src = book_img; }}
               className="w-full h-full object-cover transition-all group-hover:scale-110"
             />
           </div>
