@@ -28,7 +28,7 @@ ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv(
         "ALLOWED_HOSTS",
-        "127.0.0.1,localhost,https://bookshaven.onrender.com"
+        "127.0.0.1,localhost,bookshaven.onrender.com"  # ✅ Correct - no https://
     ).split(",")
     if h.strip()
 ]
@@ -62,14 +62,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "library_backend.urls"
 
-# React build will be copied to backend/frontend_build/
-FRONTEND_BUILD_DIR = os.path.join(BASE_DIR, "frontend_build")
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # So Django can serve React's index.html
-        "DIRS": [FRONTEND_BUILD_DIR],
+        "DIRS": [BASE_DIR,"templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -86,12 +84,20 @@ WSGI_APPLICATION = "library_backend.wsgi.application"
 # -------------
 # Database
 # -------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ----------------------
 # Password validation
@@ -115,7 +121,7 @@ USE_TZ = True
 # ----------------
 # Static / Media
 # ----------------
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 # Required for collectstatic
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
@@ -138,8 +144,8 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "0") == "1"
 # SameSite handling
 # - same-origin deploy (Replit single domain): "Lax" works
 # - cross-site deploy (frontend and backend on different domains): use "None" + secure cookies
-SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
-CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "None")  # Change from "Lax"
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "None")  # Change from "Lax"
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = None  # let browser manage it
