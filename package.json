@@ -2,6 +2,6 @@
     "name":"bookshaven-root",
     "private": true,
     "scripts": {
-        "build": "echo \"no build needed\""
+        "build": "cd frontend && npm ci && npm run build -- --base /static/ && cd .. && rm -rf backend/frontend_build backend/staticfiles && mkdir -p backend/frontend_build backend/staticfiles && cp -R frontend/dist/* backend/staticfiles/ && cp frontend/dist/index.html backend/frontend_build/index.html"
     }
 }
