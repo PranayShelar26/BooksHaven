@@ -66,8 +66,7 @@ ROOT_URLCONF = "library_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        # So Django can serve React's index.html
-        "DIRS": [BASE_DIR,"templates"],
+        "DIRS": [],  # ✅ Empty - only for admin
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
