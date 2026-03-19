@@ -1,43 +1,84 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getBook } from "../api/bookservice.js";
 import book_img from "../assets/book_banner.png";
 import Spinner from "../components/Spinner.jsx";
 import BorrowBookModal from "../components/BorrowBookModal";
+import ReturnBookModal from "../components/ReturnBookModal";
 import { mediaUrl } from "../lib/mediaUrl";
+import api from "../lib/apiClient";
 
 /**
- * BookDetail - Detailed view of a single book with borrowing option
+ * BookDetail - Detailed view of a single book with borrowing/return option
  */
 const BookDetail = () => {
   const { id } = useParams();
+  const bookId = Number(id);
+
   const [book, setBook] = useState(null);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+
+  const [myLoans, setMyLoans] = useState([]);
+  const [loadingLoans, setLoadingLoans] = useState(true);
+
   const location = useLocation();
   const navigate = useNavigate();
 
   // Fetch book on mount
   useEffect(() => {
-    getBook(id).then((res) => {
-      setBook(res.data);
-      console.log(res.data);
-    });
+    getBook(id).then((res) => setBook(res.data));
   }, [id]);
 
-  const handleBorrowSuccess = async () => {
-    console.log("Book borrowed successfully");
+  // Fetch my current loans (so we know if this book is already borrowed)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoadingLoans(true);
+      try {
+        const res = await api.get("/loans/my/");
+        if (mounted) setMyLoans(res.data || []);
+      } catch (e) {
+        if (mounted) setMyLoans([]);
+      } finally {
+        if (mounted) setLoadingLoans(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
+  // Find active loan for this book (return_date === null)
+  const activeLoanForThisBook = useMemo(() => {
+    return myLoans.find(
+      (l) => l.book?.id === bookId && (l.return_date === null || l.return_date === undefined)
+    );
+  }, [myLoans, bookId]);
+
+  const handleBorrowSuccess = async () => {
     try {
-      const res = await getBook(id);
-      setBook(res.data);
+      const [bookRes, loansRes] = await Promise.all([getBook(id), api.get("/loans/my/")]);
+      setBook(bookRes.data);
+      setMyLoans(loansRes.data || []);
     } catch (e) {
-      console.error("Failed to refresh book after borrow:", e);
+      console.error(e);
     }
   };
 
-  if (!book) {
-    return <Spinner />;
-  }
+  const handleReturnSuccess = async () => {
+    try {
+      const [bookRes, loansRes] = await Promise.all([getBook(id), api.get("/loans/my/")]);
+      setBook(bookRes.data);
+      setMyLoans(loansRes.data || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  if (!book) return <Spinner />;
+
+  const alreadyBorrowed = !!activeLoanForThisBook;
 
   return (
     <>
@@ -46,13 +87,14 @@ const BookDetail = () => {
         onClose={() => setShowBorrowModal(false)}
         book={book}
         onBorrowSuccess={handleBorrowSuccess}
-        // updata UI
-        onUpdateBook={(patch) =>
-          setBook((prev) => {
-            if (!prev) return prev;
-            return { ...prev, ...patch };
-          })
-        }
+        onUpdateBook={(patch) => setBook((prev) => (prev ? { ...prev, ...patch } : prev))}
+      />
+
+      <ReturnBookModal
+        isOpen={showReturnModal}
+        onClose={() => setShowReturnModal(false)}
+        loan={activeLoanForThisBook}
+        onReturnSuccess={handleReturnSuccess}
       />
 
       <div className="mt-6 sm:mt-8 px-4 sm:px-6 md:px-8 mx-auto max-w-6xl my-5 space-y-6 sm:space-y-8 min-h-screen w-full">
@@ -61,11 +103,8 @@ const BookDetail = () => {
           <button
             type="button"
             onClick={() => {
-              if (location.state?.from) {
-                navigate(location.state.from);
-              } else {
-                navigate(-1);
-              }
+              if (location.state?.from) navigate(location.state.from);
+              else navigate(-1);
             }}
             aria-label="Go back"
             className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg sm:rounded-xl font-semibold hover:cursor-pointer transition-all text-xs sm:text-sm"
@@ -94,8 +133,7 @@ const BookDetail = () => {
             </h1>
 
             <h2 className="text-base sm:text-lg md:text-xl text-gray-700">
-              <span className="text-black font-semibold">Author:</span>{" "}
-              {book.author}
+              <span className="text-black font-semibold">Author:</span> {book.author}
             </h2>
 
             {/* Availability */}
@@ -118,6 +156,11 @@ const BookDetail = () => {
                   ({book.available_copies}/{book.total_copies})
                 </span>
               )}
+              {!loadingLoans && alreadyBorrowed && (
+                <span className="text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                  You have borrowed this
+                </span>
+              )}
             </div>
 
             {/* Description */}
@@ -130,9 +173,7 @@ const BookDetail = () => {
 
             {/* Book Details Box */}
             <div className="flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-gray-200 rounded-lg sm:rounded-xl">
-              <h1 className="text-base sm:text-lg md:text-xl font-semibold">
-                Book Details
-              </h1>
+              <h1 className="text-base sm:text-lg md:text-xl font-semibold">Book Details</h1>
 
               <div className="flex justify-between text-xs sm:text-sm">
                 <div className="font-medium">Pages</div>
@@ -167,19 +208,31 @@ const BookDetail = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-auto">
-              <button
-                type="button"
-                onClick={() => setShowBorrowModal(true)}
-                disabled={book.available_copies <= 0}
-                aria-disabled={book.available_copies <= 0}
-                className={`p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm ${
-                  book.available_copies > 0
-                    ? "bg-amber-500 hover:bg-amber-600 cursor-pointer"
-                    : "bg-gray-400 cursor-not-allowed opacity-50"
-                }`}
-              >
-                {book.available_copies > 0 ? "Borrow" : "Not Available"}
-              </button>
+              {/* Switch Borrow/Return based on current loan */}
+              {alreadyBorrowed ? (
+                <button
+                  type="button"
+                  onClick={() => setShowReturnModal(true)}
+                  disabled={loadingLoans}
+                  className="p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm bg-red-500 hover:bg-red-600 disabled:bg-gray-400"
+                >
+                  {loadingLoans ? "Loading..." : "Return"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowBorrowModal(true)}
+                  disabled={loadingLoans || book.available_copies <= 0}
+                  aria-disabled={loadingLoans || book.available_copies <= 0}
+                  className={`p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm ${
+                    book.available_copies > 0
+                      ? "bg-amber-500 hover:bg-amber-600 cursor-pointer"
+                      : "bg-gray-400 cursor-not-allowed opacity-50"
+                  }`}
+                >
+                  {loadingLoans ? "Loading..." : book.available_copies > 0 ? "Borrow" : "Not Available"}
+                </button>
+              )}
 
               <button
                 type="button"
