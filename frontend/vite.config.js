@@ -13,8 +13,8 @@ export default defineConfig({
   ],
   build: {
     outDir: 'build',
-    sourcemap: false,
-    minify: 'esbuild',  // ← Change from 'terser' to 'esbuild'
+    sourcemap: true,   // ← Change to true
+    minify: false,     // ← Change to false
     rollupOptions: {
       output: {
         entryFileNames: 'js/[name].[hash].js',
