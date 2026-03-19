@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-
+from cloudinary.models import CloudinaryField
 
 class Book(models.Model):
     """Book entity stored in the library catalogue (with optional cover image and inventory counts)."""
@@ -71,12 +71,15 @@ class Book(models.Model):
     )
 
     # Cover image (requires Pillow; stored under MEDIA_ROOT/book_covers/)
-    cover = models.ImageField(
-        upload_to='book_covers/',
-        null=True,
-        blank=True,
-        help_text='Upload a book cover image (JPG, PNG, etc.)'
-    )
+    cover = CloudinaryField('image', folder='book_covers/', null=True, blank=True)
+    
+    @property
+    def cover_thumbnail(self):
+        if self.cover:
+            return cloudinary.CloudinaryResource(
+                self.cover.public_id
+            ).build_url(width=200, height=300, crop='fill', quality='auto')
+        return None
 
     # Inventory tracking
     total_copies = models.PositiveIntegerField(default=1)

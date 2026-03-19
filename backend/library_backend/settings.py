@@ -11,13 +11,24 @@ from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
-
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env from backend/ directory (optional; safe if file does not exist)
 load_dotenv(BASE_DIR / ".env")
 
+# Cloudinary config from environment variables
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# This is the key line that switches Django to Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # -----------------
 # Core settings
 # -----------------
@@ -46,6 +57,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "books",
+    "cloudinary_storage",
+    "cloudinary",
 ]
 
 MIDDLEWARE = [
