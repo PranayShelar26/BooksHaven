@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../lib/apiClient";
-import axios from "axios";
+
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
@@ -8,9 +8,9 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+
   useEffect(() => {
-    axios
-      api.get("/auth/me/")
+    api.get("/auth/me/")
       .then((res) => {
         if (res.data.authenticated) setUser(res.data.user);
       })
@@ -26,7 +26,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ users,setUsers,user, setUser, loading , search, setSearch}}>
+    <UserContext.Provider value={{ users, setUsers, user, setUser, loading, search, setSearch }}>
       {children}
     </UserContext.Provider>
   );
