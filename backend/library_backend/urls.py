@@ -12,7 +12,7 @@ def health(request):
 
 urlpatterns = [
     # Health check endpoint
-    path("health/", health),
+    path("/", health),
 
     # Django admin
     path("admin/", admin.site.urls),
