@@ -9,7 +9,7 @@ Django settings for library_backend project.
 
 from pathlib import Path
 import os
-
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / "subdir".
@@ -28,7 +28,7 @@ ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv(
         "ALLOWED_HOSTS",
-        "127.0.0.1,localhost,.replit.app,.repl.co"
+        "https://bookshaven.onrender.com/"
     ).split(",")
     if h.strip()
 ]
@@ -103,6 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+#
 # ----------------------
 # Internationalization
 # ----------------------
@@ -153,17 +154,17 @@ CORS_ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv(
         "CORS_ALLOWED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
+        "http://localhost:5173,http://127.0.0.1:5173,https://bookshaven-frontend.onrender.com"
     ).split(",")
     if o.strip()
 ]
 
-# For local dev with Vite; for same-origin production, it’s generally not needed.
+# Same for CSRF_TRUSTED_ORIGINS
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
     for o in os.getenv(
         "CSRF_TRUSTED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
+        "http://localhost:5173,http://127.0.0.1:5173,https://bookshaven-frontend.onrender.com"
     ).split(",")
     if o.strip()
 ]
