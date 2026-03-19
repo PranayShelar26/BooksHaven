@@ -12,6 +12,7 @@ from .serializer import serialize_loan, serialize_book
 from .models import Book, Loan
 from django.db.models import Count
 from django.db.models import Q
+import cloudinary.uploader
 
 # ============================================
 # BooksHaven Backend Views
@@ -555,17 +556,20 @@ def admin_book_detail(request, book_id: int):
  
     if request.method == "DELETE":
         book_title = b.title
-        
-        if b.cover:
-            b.cover.delete()
-        
+
+        # Delete image from Cloudinary
+        if b.cover and hasattr(b.cover, "public_id"):
+            import cloudinary.uploader
+            cloudinary.uploader.destroy(b.cover.public_id)
+
+        # Delete book from DB
         b.delete()
-        
+
         return JsonResponse({
             "ok": True,
             "message": f"Book '{book_title}' deleted."
         })
- 
+        
     return HttpResponseNotAllowed(["PUT", "DELETE"])
  
  
