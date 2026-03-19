@@ -12,6 +12,18 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  build: {
+    outDir: 'build',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        entryFileNames: 'js/[name].[hash].js',
+        chunkFileNames: 'js/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash][extname]'
+      }
+    }
+  },
   server: {
     proxy: {
       "/api": {
