@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
-
+import cloudinary
 class Book(models.Model):
     """Book entity stored in the library catalogue (with optional cover image and inventory counts)."""
 
