@@ -206,42 +206,31 @@ const BookDetail = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-auto">
-              {/* Switch Borrow/Return based on current loan */}
-              {alreadyBorrowed ? (
-                <button
-                  type="button"
-                  onClick={() => setShowReturnModal(true)}
-                  disabled={loadingLoans}
-                  className="p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm bg-red-500 hover:bg-red-600 disabled:bg-gray-400"
-                >
-                  {loadingLoans ? "Loading..." : "Return"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowBorrowModal(true)}
-                  disabled={loadingLoans || book.available_copies <= 0}
-                  aria-disabled={loadingLoans || book.available_copies <= 0}
-                  className={`p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm ${
-                    book.available_copies > 0
-                      ? "bg-amber-500 hover:bg-amber-600 cursor-pointer"
-                      : "bg-gray-400 cursor-not-allowed opacity-50"
-                  }`}
-                >
-                  {loadingLoans ? "Loading..." : book.available_copies > 0 ? "Borrow" : "Not Available"}
-                </button>
-              )}
-
+            {/* Borrow/Return Button */}
+            {alreadyBorrowed ? (
               <button
                 type="button"
-                className="p-2 sm:p-3 border border-gray-400 hover:bg-gray-200 w-full rounded-lg sm:rounded-xl font-bold transition text-xs sm:text-sm"
-                aria-label="Add this book to wishlist"
+                onClick={() => setShowReturnModal(true)}
+                disabled={loadingLoans}
+                className="p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm bg-red-500 hover:bg-red-600 disabled:bg-gray-400"
               >
-                Add to Wishlist
+                {loadingLoans ? "Loading..." : "Return"}
               </button>
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowBorrowModal(true)}
+                disabled={loadingLoans || book.available_copies <= 0}
+                aria-disabled={loadingLoans || book.available_copies <= 0}
+                className={`p-2 sm:p-3 w-full rounded-lg sm:rounded-xl font-bold text-white transition text-xs sm:text-sm ${
+                  book.available_copies > 0
+                    ? "bg-amber-500 hover:bg-amber-600 cursor-pointer"
+                    : "bg-gray-400 cursor-not-allowed opacity-50"
+                }`}
+              >
+                {loadingLoans ? "Loading..." : book.available_copies > 0 ? "Borrow" : "Not Available"}
+              </button>
+            )}
           </div>
         </div>
       </div>
