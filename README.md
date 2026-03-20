@@ -25,7 +25,7 @@ This project was developed as part of a university coursework to demonstrate ful
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 Frontend
 
@@ -213,9 +213,9 @@ http://localhost:5173
 ## System Architecture
 
 React (Frontend)
-⬇
+-
 Django REST API
-⬇
+-
 SQLite / PostgreSQL Database
 
 ---
