@@ -213,9 +213,9 @@ http://localhost:5173
 ## System Architecture
 
 React (Frontend)
--
+
 Django REST API
--
+
 SQLite / PostgreSQL Database
 
 ---
