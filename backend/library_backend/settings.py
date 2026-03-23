@@ -165,10 +165,16 @@ SESSION_COOKIE_AGE = 1209600  # 14 days
 
 # Allow frontend to send cookies (safe even for same-origin)
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://bookshaven-frontend.vercel.app",  # Production
+    "http://localhost:3000",                    # Local React
+    "http://localhost:5173",                    # Local Vite
+    "http://127.0.0.1:8000",                    # Local Django (optional)
+]
 
 # In same-origin deploy, CORS is not needed, but keeping it doesn't break anything.
 # Provide safe defaults for local dev; override via env in production if you split domains.
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 # avoid redirect-to-profile after login
 LOGIN_REDIRECT_URL = "/admin/"
 
